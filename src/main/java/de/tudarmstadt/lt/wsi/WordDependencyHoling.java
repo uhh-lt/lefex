@@ -1,3 +1,4 @@
+package de.tudarmstadt.lt.wsi;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
@@ -124,7 +125,7 @@ public class WordDependencyHoling extends Configured implements Tool {
 		job.setMapOutputValueClass(IntWritable.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
-		job.setJobName("WikiLinkProcessor:WordDependencyHoling");
+		job.setJobName("NounSenseInduction:WordDependencyHoling");
 		return job.waitForCompletion(true);
 	}
 
