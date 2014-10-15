@@ -72,7 +72,7 @@ public class WordDependencyHoling extends Configured implements Tool {
 			throws IOException, InterruptedException {
 			try {
 				String text = value.toString();
-				log.info("Handling sentence of length " + text.length());
+//				log.info("Handling sentence of length " + text.length());
 				jCas.reset();
 				jCas.setDocumentText(text);
 				jCas.setDocumentLanguage("en");
