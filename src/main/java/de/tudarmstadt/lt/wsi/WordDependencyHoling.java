@@ -33,9 +33,9 @@ import org.apache.uima.util.CasCreationUtils;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordPosTagger;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordSegmenter;
 
 public class WordDependencyHoling extends Configured implements Tool {
 	private static class WordDependencyHolingMap extends Mapper<LongWritable, Text, Text, IntWritable> {
@@ -44,9 +44,9 @@ public class WordDependencyHoling extends Configured implements Tool {
 		JCas jCas;
 
 		public AnalysisEngineDescription buildAnalysisEngine() throws ResourceInitializationException {
-			AnalysisEngineDescription segmenter = AnalysisEngineFactory.createEngineDescription(StanfordSegmenter.class);
+			AnalysisEngineDescription segmenter = AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class);
 			AnalysisEngineDescription lemmatizer = AnalysisEngineFactory.createEngineDescription(StanfordLemmatizer.class);
-			AnalysisEngineDescription pos = AnalysisEngineFactory.createEngineDescription(StanfordPosTagger.class);
+			AnalysisEngineDescription pos = AnalysisEngineFactory.createEngineDescription(OpenNlpPosTagger.class);
 			AnalysisEngineDescription deps = AnalysisEngineFactory.createEngineDescription(MaltParser.class);
 
 			return AnalysisEngineFactory.createEngineDescription(

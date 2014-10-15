@@ -3,6 +3,16 @@
   <groupId>de.tudarmstadt.lt</groupId>
   <artifactId>noun-sense-induction</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+	<repositories>
+		<repository>
+			<id>Zoidberg UKP Models</id>
+			<url>http://zoidberg.ukp.informatik.tu-darmstadt.de/artifactory/public-model-releases-local/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<!-- <updatePolicy>always</updatePolicy> -->
+			</snapshots>
+		</repository>
+	</repositories>
   <dependencies>
   	<dependency>
   		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
@@ -22,6 +32,34 @@
   			de.tudarmstadt.ukp.dkpro.core.maltparser-asl
   		</artifactId>
   		<version>1.6.2</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+  		<artifactId>
+  			de.tudarmstadt.ukp.dkpro.core.opennlp-asl
+  		</artifactId>
+  		<version>1.5.0</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+  		<artifactId>
+  			de.tudarmstadt.ukp.dkpro.core.opennlp-model-token-en-maxent
+  		</artifactId>
+  		<version>20120616.0</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+  		<artifactId>
+  			de.tudarmstadt.ukp.dkpro.core.opennlp-model-tagger-en-maxent
+  		</artifactId>
+  		<version>20120616.0</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+  		<artifactId>
+  			de.tudarmstadt.ukp.dkpro.core.opennlp-model-sentence-en-maxent
+  		</artifactId>
+  		<version>20120616.0</version>
   	</dependency>
   </dependencies>
 </project>
