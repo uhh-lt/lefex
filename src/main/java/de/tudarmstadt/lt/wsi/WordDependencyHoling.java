@@ -88,16 +88,17 @@ public class WordDependencyHoling extends Configured implements Tool {
 					String dataset = "_dataset_";
 					String sourceSpan = source.getBegin() + ":" + source.getEnd();
 					String targetSpan = target.getBegin() + ":" + target.getEnd();
+					String depSpan = dep.getBegin() + ":" + dep.getEnd();
 					if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
 						context.write(
 								new Text(sourceLemma + "\t" + rel + "(@@," + targetLemma + ")\t" +
-										 dataset + "\t" + sourceSpan + "\t" + targetSpan),
+										 dataset + "\t" + sourceSpan + "\t" + depSpan),
 								NullWritable.get());
 					}
 					if (targetPos.equals("NN") || targetPos.equals("NNS")) {
 						context.write(
 								new Text(targetLemma + "\t" + rel + "(" + sourceLemma + ", @@)\t" +
-										 dataset + "\t" + targetSpan + "\t" + sourceSpan),
+										 dataset + "\t" + targetSpan + "\t" + depSpan),
 								NullWritable.get());
 					}
 				}
