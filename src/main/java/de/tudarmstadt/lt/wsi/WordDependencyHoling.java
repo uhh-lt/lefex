@@ -10,14 +10,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
@@ -38,7 +37,7 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 
 public class WordDependencyHoling extends Configured implements Tool {
-	private static class WordDependencyHolingMap extends Mapper<LongWritable, Text, Text, IntWritable> {
+	private static class WordDependencyHolingMap extends Mapper<LongWritable, Text, Text, NullWritable> {
 		Logger log = Logger.getLogger("de.tudarmstadt.lt.wiki");
 		AnalysisEngine engine;
 		JCas jCas;
@@ -86,15 +85,20 @@ public class WordDependencyHoling extends Configured implements Tool {
 					String targetPos = target.getPos().getPosValue();
 					String sourceLemma = source.getLemma().getValue();
 					String targetLemma = target.getLemma().getValue();
+					String dataset = "_dataset_";
+					String sourceSpan = source.getBegin() + ":" + source.getEnd();
+					String targetSpan = target.getBegin() + ":" + target.getEnd();
 					if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
 						context.write(
-								new Text(sourceLemma + "\t" + rel + "(@@," + targetLemma + ")"),
-								new IntWritable(1));
+								new Text(sourceLemma + "\t" + rel + "(@@," + targetLemma + ")\t" +
+										 dataset + "\t" + sourceSpan + "\t" + targetSpan),
+								NullWritable.get());
 					}
 					if (targetPos.equals("NN") || targetPos.equals("NNS")) {
 						context.write(
-								new Text(targetLemma + "\t" + rel + "(" + sourceLemma + ", @@)"),
-								new IntWritable(1));
+								new Text(targetLemma + "\t" + rel + "(" + sourceLemma + ", @@)\t" +
+										 dataset + "\t" + targetSpan + "\t" + sourceSpan),
+								NullWritable.get());
 					}
 				}
 			} catch (Exception e) {
@@ -120,11 +124,11 @@ public class WordDependencyHoling extends Configured implements Tool {
 		FileInputFormat.addInputPath(job, new Path(inDir));
 		FileOutputFormat.setOutputPath(job, new Path(_outDir));
 		job.setMapperClass(WordDependencyHolingMap.class);
-		job.setReducerClass(IntSumReducer.class);
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(IntWritable.class);
+		job.setMapOutputValueClass(NullWritable.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
+		job.setOutputValueClass(NullWritable.class);
+		job.setNumReduceTasks(0);
 		job.setJobName("NounSenseInduction:WordDependencyHoling");
 		return job.waitForCompletion(true);
 	}
