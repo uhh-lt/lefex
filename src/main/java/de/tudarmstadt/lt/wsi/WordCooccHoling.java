@@ -10,13 +10,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Logger;
@@ -35,11 +39,12 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 
 public class WordCooccHoling extends Configured implements Tool {
-	private static class WordCooccHolingMap extends Mapper<LongWritable, Text, Text, NullWritable> {
+	private static class WordCooccHolingMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 		Logger log = Logger.getLogger("de.tudarmstadt.lt.wiki");
 		AnalysisEngine engine;
 		JCas jCas;
-		String inputSplit;
+		
+		private static IntWritable ONE = new IntWritable(1);
 
 		public AnalysisEngineDescription buildAnalysisEngine() throws ResourceInitializationException {
 			AnalysisEngineDescription segmenter = AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class);
@@ -62,7 +67,6 @@ public class WordCooccHoling extends Configured implements Tool {
 				log.error("Couldn't create new CAS", e);
 			}
 			log.info("Ready!");
-			inputSplit = context.getInputSplit().toString();
 		}
 		
 		@Override
@@ -70,8 +74,6 @@ public class WordCooccHoling extends Configured implements Tool {
 			throws IOException, InterruptedException {
 			try {
 				String text = value.toString();
-				String dataset = inputSplit + "/" + key.toString();
-//				log.info("Handling sentence of length " + text.length());
 				jCas.reset();
 				jCas.setDocumentText(text);
 				jCas.setDocumentLanguage("en");
@@ -80,12 +82,16 @@ public class WordCooccHoling extends Configured implements Tool {
 				for (Token token : tokens) {
 					String pos = token.getPos().getPosValue();
 					String lemma = token.getLemma().getValue();
-					String tokenSpan = token.getBegin() + ":" + token.getEnd();
+					// Each token occurs as word ...
+					context.write(new Text("W\t" + lemma), ONE);
+					// ... and as feature
+					context.write(new Text("F\t" + lemma), ONE); 
 					if (pos.equals("NN") || pos.equals("NNS")) {
 						for (Token token2 : tokens) {
-							String lemma2 = token2.getLemma().getValue();
-							String token2Span = token2.getBegin() + ":" + token2.getEnd();
-							context.write(new Text(lemma + "\t" + lemma2 + "\t" + dataset + "\t" + tokenSpan + "\t" + token2Span), NullWritable.get()); 
+							if (!token2.equals(token)) {
+								String lemma2 = token2.getLemma().getValue();
+								context.write(new Text("WF\t" + lemma + "\t" + lemma2), ONE);
+							}
 						}
 					}
 				}
@@ -113,10 +119,18 @@ public class WordCooccHoling extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(job, new Path(_outDir));
 		job.setMapperClass(WordCooccHolingMap.class);
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(NullWritable.class);
+		job.setMapOutputValueClass(IntWritable.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(NullWritable.class);
-		job.setNumReduceTasks(0);
+		job.setOutputValueClass(IntWritable.class);
+		job.setCombinerClass(IntSumReducer.class);
+		job.setReducerClass(MultiOutputIntSumReducer.class);
+
+		// Turn off the default output ("part-..."), we don't need it
+		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
+		MultipleOutputs.addNamedOutput(job, "W", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "WF", TextOutputFormat.class, Text.class, IntWritable.class);
+		
 		job.setJobName("NounSenseInduction:WordCooccHoling");
 		return job.waitForCompletion(true);
 	}
