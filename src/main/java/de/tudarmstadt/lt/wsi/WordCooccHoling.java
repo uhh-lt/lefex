@@ -30,14 +30,12 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.CasCreationUtils;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 
-public class WordDependencyHoling extends Configured implements Tool {
-	private static class WordDependencyHolingMap extends Mapper<LongWritable, Text, Text, NullWritable> {
+public class WordCooccHoling extends Configured implements Tool {
+	private static class WordCooccHolingMap extends Mapper<LongWritable, Text, Text, NullWritable> {
 		Logger log = Logger.getLogger("de.tudarmstadt.lt.wiki");
 		AnalysisEngine engine;
 		JCas jCas;
@@ -47,10 +45,9 @@ public class WordDependencyHoling extends Configured implements Tool {
 			AnalysisEngineDescription segmenter = AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class);
 			AnalysisEngineDescription pos = AnalysisEngineFactory.createEngineDescription(OpenNlpPosTagger.class);
 			AnalysisEngineDescription lemmatizer = AnalysisEngineFactory.createEngineDescription(StanfordLemmatizer.class);
-			AnalysisEngineDescription deps = AnalysisEngineFactory.createEngineDescription(MaltParser.class);
 
 			return AnalysisEngineFactory.createEngineDescription(
-					segmenter, pos, lemmatizer, deps);
+					segmenter, pos, lemmatizer);
 		}
 		
 		@Override
@@ -79,29 +76,17 @@ public class WordDependencyHoling extends Configured implements Tool {
 				jCas.setDocumentText(text);
 				jCas.setDocumentLanguage("en");
 				engine.process(jCas);
-				Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
-				for (Dependency dep : deps) {
-					Token source = dep.getGovernor();
-					Token target = dep.getDependent();
-					String rel = dep.getDependencyType();
-					String sourcePos = source.getPos().getPosValue();
-					String targetPos = target.getPos().getPosValue();
-					String sourceLemma = source.getLemma().getValue();
-					String targetLemma = target.getLemma().getValue();
-					String sourceSpan = source.getBegin() + ":" + source.getEnd();
-					String targetSpan = target.getBegin() + ":" + target.getEnd();
-					String depSpan = dep.getBegin() + ":" + dep.getEnd();
-					if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
-						context.write(
-								new Text(sourceLemma + "\t" + rel + "(@@," + targetLemma + ")\t" +
-										 dataset + "\t" + sourceSpan + "\t" + depSpan),
-								NullWritable.get());
-					}
-					if (targetPos.equals("NN") || targetPos.equals("NNS")) {
-						context.write(
-								new Text(targetLemma + "\t" + rel + "(" + sourceLemma + ",@@)\t" +
-										 dataset + "\t" + targetSpan + "\t" + depSpan),
-								NullWritable.get());
+				Collection<Token> tokens = JCasUtil.select(jCas, Token.class);
+				for (Token token : tokens) {
+					String pos = token.getPos().getPosValue();
+					String lemma = token.getLemma().getValue();
+					String tokenSpan = token.getBegin() + ":" + token.getEnd();
+					if (pos.equals("NN") || pos.equals("NNS")) {
+						for (Token token2 : tokens) {
+							String lemma2 = token2.getLemma().getValue();
+							String token2Span = token2.getBegin() + ":" + token2.getEnd();
+							context.write(new Text(lemma + "\t" + lemma2 + "\t" + dataset + "\t" + tokenSpan + "\t" + token2Span), NullWritable.get()); 
+						}
 					}
 				}
 			} catch (Exception e) {
@@ -123,16 +108,16 @@ public class WordDependencyHoling extends Configured implements Tool {
 		conf.setBoolean("mapred.output.compress", true);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
-		job.setJarByClass(WordDependencyHoling.class);
+		job.setJarByClass(WordCooccHoling.class);
 		FileInputFormat.addInputPath(job, new Path(inDir));
 		FileOutputFormat.setOutputPath(job, new Path(_outDir));
-		job.setMapperClass(WordDependencyHolingMap.class);
+		job.setMapperClass(WordCooccHolingMap.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(NullWritable.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(NullWritable.class);
 		job.setNumReduceTasks(0);
-		job.setJobName("NounSenseInduction:WordDependencyHoling");
+		job.setJobName("NounSenseInduction:WordCooccHoling");
 		return job.waitForCompletion(true);
 	}
 
@@ -150,7 +135,7 @@ public class WordDependencyHoling extends Configured implements Tool {
 
 	public static void main(final String[] args) throws Exception {
 		Configuration conf = new Configuration();
-		int res = ToolRunner.run(conf, new WordDependencyHoling(), args);
+		int res = ToolRunner.run(conf, new WordCooccHoling(), args);
 		System.exit(res);
 	}
 }
