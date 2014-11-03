@@ -68,6 +68,9 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			jCas.setDocumentLanguage("en");
 			engine.process(jCas);
 			Collection<Token> tokens = JCasUtil.select(jCas, Token.class);
+			if (tokens.size() > 100) {
+				log.warn("Sentence has more than 100 tokens!");
+			}
 			for (Token token : tokens) {
 				String pos = token.getPos().getPosValue();
 				String lemma = token.getLemma().getValue();
@@ -80,6 +83,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 						}
 					}
 				}
+				context.progress();
 			}
 			Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
 			for (Dependency dep : deps) {
@@ -98,6 +102,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 					context.write(new Text("DEP-F\t(" + sourceLemma + ",@@)"), ONE);
 					context.write(new Text("DEP-WF\t" + targetLemma + "\t" + rel + "(" + sourceLemma + ",@@)"), ONE);
 				}
+				context.progress();
 			}
 		} catch (Exception e) {
 			log.error("Can't process line: " + value.toString(), e);
