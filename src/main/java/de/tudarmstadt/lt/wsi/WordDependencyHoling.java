@@ -41,6 +41,7 @@ public class WordDependencyHoling extends Configured implements Tool {
 		Logger log = Logger.getLogger("de.tudarmstadt.lt.wiki");
 		AnalysisEngine engine;
 		JCas jCas;
+		String inputSplit;
 
 		public AnalysisEngineDescription buildAnalysisEngine() throws ResourceInitializationException {
 			AnalysisEngineDescription segmenter = AnalysisEngineFactory.createEngineDescription(OpenNlpSegmenter.class);
@@ -64,6 +65,7 @@ public class WordDependencyHoling extends Configured implements Tool {
 				log.error("Couldn't create new CAS", e);
 			}
 			log.info("Ready!");
+			inputSplit = context.getInputSplit().toString();
 		}
 		
 		@Override
@@ -71,6 +73,7 @@ public class WordDependencyHoling extends Configured implements Tool {
 			throws IOException, InterruptedException {
 			try {
 				String text = value.toString();
+				String dataset = inputSplit + "/" + key.toString();
 //				log.info("Handling sentence of length " + text.length());
 				jCas.reset();
 				jCas.setDocumentText(text);
@@ -85,7 +88,6 @@ public class WordDependencyHoling extends Configured implements Tool {
 					String targetPos = target.getPos().getPosValue();
 					String sourceLemma = source.getLemma().getValue();
 					String targetLemma = target.getLemma().getValue();
-					String dataset = "_dataset_";
 					String sourceSpan = source.getBegin() + ":" + source.getEnd();
 					String targetSpan = target.getBegin() + ":" + target.getEnd();
 					String depSpan = dep.getBegin() + ":" + dep.getEnd();
