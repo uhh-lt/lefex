@@ -68,8 +68,10 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			jCas.setDocumentLanguage("en");
 			engine.process(jCas);
 			Collection<Token> tokens = JCasUtil.select(jCas, Token.class);
-			if (tokens.size() > 100) {
-				log.warn("Sentence has more than 100 tokens!");
+			final int MAX_NUM_TOKENS = 100;
+			if (tokens.size() > MAX_NUM_TOKENS) {
+				context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
+				return;
 			}
 			for (Token token : tokens) {
 				String pos = token.getPos().getPosValue();
@@ -79,7 +81,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 					for (Token token2 : tokens) {
 						if (!token2.equals(token)) {
 							String lemma2 = token2.getLemma().getValue();
-							context.write(new Text("COOC-WF\t" + lemma + "\t" + lemma2), ONE);
+							context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
 						}
 					}
 				}
@@ -95,12 +97,12 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 				String sourceLemma = source.getLemma().getValue();
 				String targetLemma = target.getLemma().getValue();
 				if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
-					context.write(new Text("DEP-F\t(@@," + targetLemma + ")"), ONE);
-					context.write(new Text("DEP-WF\t" + sourceLemma + "\t" + rel + "(@@," + targetLemma + ")"), ONE);
+					context.write(new Text("DepF\t(@@," + targetLemma + ")"), ONE);
+					context.write(new Text("DepWF\t" + sourceLemma + "\t" + rel + "(@@," + targetLemma + ")"), ONE);
 				}
 				if (targetPos.equals("NN") || targetPos.equals("NNS")) {
-					context.write(new Text("DEP-F\t(" + sourceLemma + ",@@)"), ONE);
-					context.write(new Text("DEP-WF\t" + targetLemma + "\t" + rel + "(" + sourceLemma + ",@@)"), ONE);
+					context.write(new Text("DepF\t(" + sourceLemma + ",@@)"), ONE);
+					context.write(new Text("DepWF\t" + targetLemma + "\t" + rel + "(" + sourceLemma + ",@@)"), ONE);
 				}
 				context.progress();
 			}

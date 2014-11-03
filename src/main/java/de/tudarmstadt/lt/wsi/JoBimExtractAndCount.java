@@ -28,7 +28,7 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 			_outDir = outDir + outDirSuffix;
 			outDirSuffix++;
 		}
-		conf.setBoolean("mapred.output.compress", true);
+		conf.setBoolean("mapred.output.compress", false);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(JoBimExtractAndCount.class);
@@ -45,9 +45,9 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 		// Turn off the default output ("part-..."), we don't need it
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
 		MultipleOutputs.addNamedOutput(job, "W", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "COOC-WF", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "DEP-F", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "DEP-WF", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "DepF", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "DepWF", TextOutputFormat.class, Text.class, IntWritable.class);
 		
 		job.setJobName("NounSenseInduction:JoBimExtractAndCount");
 		return job.waitForCompletion(true);

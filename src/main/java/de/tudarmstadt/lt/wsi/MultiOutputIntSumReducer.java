@@ -15,6 +15,11 @@ public class MultiOutputIntSumReducer extends Reducer<Text, IntWritable, Text, I
 	public void setup(Context context) {
 		mos = new MultipleOutputs<Text, IntWritable>(context);
 	}
+	
+	@Override
+	public void cleanup(Context context) throws IOException, InterruptedException {
+		mos.close();
+	}
 
 	@Override
 	public void reduce(Text keyComposite, Iterable<IntWritable> values, Context context)
