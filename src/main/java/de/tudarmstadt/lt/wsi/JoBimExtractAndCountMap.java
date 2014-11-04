@@ -97,12 +97,14 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 				String sourceLemma = source.getLemma().getValue();
 				String targetLemma = target.getLemma().getValue();
 				if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
-					context.write(new Text("DepF\t(@@," + targetLemma + ")"), ONE);
-					context.write(new Text("DepWF\t" + sourceLemma + "\t" + rel + "(@@," + targetLemma + ")"), ONE);
+					String bim = rel + "(@@," + targetLemma + ")";
+					context.write(new Text("DepF\t" + bim), ONE);
+					context.write(new Text("DepWF\t" + sourceLemma + "\t" + bim), ONE);
 				}
 				if (targetPos.equals("NN") || targetPos.equals("NNS")) {
-					context.write(new Text("DepF\t(" + sourceLemma + ",@@)"), ONE);
-					context.write(new Text("DepWF\t" + targetLemma + "\t" + rel + "(" + sourceLemma + ",@@)"), ONE);
+					String bim = rel + "(" + sourceLemma + ",@@)";
+					context.write(new Text("DepF\t" + bim), ONE);
+					context.write(new Text("DepWF\t" + targetLemma + "\t" + bim), ONE);
 				}
 				context.progress();
 			}
