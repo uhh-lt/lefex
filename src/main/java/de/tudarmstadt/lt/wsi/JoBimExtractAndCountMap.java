@@ -88,7 +88,6 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			for (Token token : tokens) {
 				String pos = token.getPos().getPosValue();
 				String lemma = token.getLemma().getValue();
-				tokenSet.add(lemma + "#" + pos);
 				context.write(new Text("W\t" + lemma), ONE);
 				if (pos.equals("NN") || pos.equals("NNS")) {
 					for (String lemma2 : tokenSet) {
