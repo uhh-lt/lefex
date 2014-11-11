@@ -4,6 +4,8 @@ import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTyp
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -68,21 +70,29 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			jCas.setDocumentLanguage("en");
 			engine.process(jCas);
 			Collection<Token> tokens = JCasUtil.select(jCas, Token.class);
+			Set<String> tokenSet = new HashSet<String>();
 			final int MAX_NUM_TOKENS = 100;
 			if (tokens.size() > MAX_NUM_TOKENS) {
 				context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
 				return;
 			}
 			for (Token token : tokens) {
+				String lemma = token.getLemma().getValue();
+				tokenSet.add(lemma);
+			}
+			
+			for (String lemma : tokenSet) {
+				context.write(new Text("CoocF\t" + lemma), ONE);
+			}
+			
+			for (Token token : tokens) {
 				String pos = token.getPos().getPosValue();
 				String lemma = token.getLemma().getValue();
+				tokenSet.add(lemma + "#" + pos);
 				context.write(new Text("W\t" + lemma), ONE);
 				if (pos.equals("NN") || pos.equals("NNS")) {
-					for (Token token2 : tokens) {
-						if (!token2.equals(token)) {
-							String lemma2 = token2.getLemma().getValue();
-							context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
-						}
+					for (String lemma2 : tokenSet) {
+						context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
 					}
 				}
 				context.progress();

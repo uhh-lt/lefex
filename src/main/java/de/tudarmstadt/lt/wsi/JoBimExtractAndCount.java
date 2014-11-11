@@ -45,6 +45,7 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 		// Turn off the default output ("part-..."), we don't need it
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
 		MultipleOutputs.addNamedOutput(job, "W", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "CoocF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "DepF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "DepWF", TextOutputFormat.class, Text.class, IntWritable.class);
