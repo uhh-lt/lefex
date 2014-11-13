@@ -3,6 +3,7 @@ package de.tudarmstadt.lt.wsi;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +32,8 @@ import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
 	AnalysisEngine segmenter;
-	AnalysisEngine posTaggerLemmatizer;
+	AnalysisEngine posTagger;
+	AnalysisEngine lemmatizer;
 	AnalysisEngine depParser;
 	JCas jCas;
 	boolean semantifyDependencies;
@@ -45,7 +47,8 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 		log.info("Initializing JoBimExtractAndCount...");
 		try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
-			posTaggerLemmatizer = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class, StanfordLemmatizer.class);
+			posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
+			lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
 			depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
 		} catch (ResourceInitializationException e) {
@@ -76,7 +79,8 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 				return;
 			}
 
-			posTaggerLemmatizer.process(jCas);
+			posTagger.process(jCas);
+			lemmatizer.process(jCas);
 			if (computeCoocs) {
 				for (Token token : tokens) {
 					String lemma = token.getLemma().getValue();
