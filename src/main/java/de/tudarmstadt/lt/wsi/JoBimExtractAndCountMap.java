@@ -81,6 +81,12 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 
 			posTagger.process(jCas);
 			lemmatizer.process(jCas);
+			
+			for (Token token : tokens) {
+				String lemma = token.getLemma().getValue();
+				context.write(new Text("W\t" + lemma), ONE);
+			}
+			
 			if (computeCoocs) {
 				for (Token token : tokens) {
 					String lemma = token.getLemma().getValue();
@@ -94,7 +100,6 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 				for (Token token : tokens) {
 					String pos = token.getPos().getPosValue();
 					String lemma = token.getLemma().getValue();
-					context.write(new Text("W\t" + lemma), ONE);
 					if (pos.equals("NN") || pos.equals("NNS")) {
 						for (String lemma2 : tokenSet) {
 							context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
