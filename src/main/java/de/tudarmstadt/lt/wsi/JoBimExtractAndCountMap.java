@@ -3,7 +3,6 @@ package de.tudarmstadt.lt.wsi;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,6 +58,9 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
 		computeDependencies = context.getConfiguration().getBoolean("holing.dependencies", false);
 		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", false);
+		log.info("Computing coocs: " + computeCoocs);
+		log.info("Computing dependencies: " + computeDependencies);
+		log.info("Semantifying dependencies: " + semantifyDependencies);
 		log.info("Ready!");
 	}
 	
