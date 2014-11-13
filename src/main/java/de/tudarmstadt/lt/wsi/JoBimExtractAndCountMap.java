@@ -33,6 +33,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
 	AnalysisEngine engine;
 	JCas jCas;
+	boolean semantifyDependencies;
 	
 	private static IntWritable ONE = new IntWritable(1);
 
@@ -57,6 +58,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 		} catch (CASException e) {
 			log.error("Couldn't create new CAS", e);
 		}
+		semantifyDependencies = context.getConfiguration().getBoolean("dependencies.semantify", false);
 		log.info("Ready!");
 	}
 	
@@ -101,6 +103,12 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 				Token source = dep.getGovernor();
 				Token target = dep.getDependent();
 				String rel = dep.getDependencyType();
+				if (semantifyDependencies) {
+					rel = semantifyDependencyRelation(rel);
+					if (rel == null) {
+						continue;
+					}
+				}
 				String sourcePos = source.getPos().getPosValue();
 				String targetPos = target.getPos().getPosValue();
 				String sourceLemma = source.getLemma().getValue();
@@ -121,5 +129,19 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			log.error("Can't process line: " + value.toString(), e);
 			context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
 		}
+	}
+	
+	private String semantifyDependencyRelation(String rel) {
+		switch (rel) {
+		case "nsubj":
+			return "subj";
+		case "nsubjpass":
+		case "partmod":
+		case "infmod":
+		case "vmod":
+		case "dobj":
+			return "obj";
+		}
+		return null;
 	}
 }
