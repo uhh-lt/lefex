@@ -99,14 +99,14 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 					context.write(new Text("CoocF\t" + lemma), ONE);
 				}
 				
-				for (Token token : tokens) {
-					String pos = token.getPos().getPosValue();
-					String lemma = token.getLemma().getValue();
-					if (pos.equals("NN") || pos.equals("NNS")) {
+				for (String lemma : tokenSet) {
+//					String pos = token.getPos().getPosValue();
+//					String lemma = token.getLemma().getValue();
+//					if (pos.equals("NN") || pos.equals("NNS")) {
 						for (String lemma2 : tokenSet) {
 							context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
 						}
-					}
+//					}
 					context.progress();
 				}
 			}
