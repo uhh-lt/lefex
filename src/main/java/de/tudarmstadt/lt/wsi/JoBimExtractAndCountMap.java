@@ -44,20 +44,22 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	@Override
 	public void setup(Context context) {
 		log.info("Initializing JoBimExtractAndCount...");
+		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
+		computeDependencies = context.getConfiguration().getBoolean("holing.dependencies", false);
+		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", false);
 		try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
 			posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
 			lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
-			depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
+			if (computeDependencies) {
+				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
+			}
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
 		} catch (ResourceInitializationException e) {
 			log.error("Couldn't initialize analysis engine", e);
 		} catch (CASException e) {
 			log.error("Couldn't create new CAS", e);
 		}
-		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
-		computeDependencies = context.getConfiguration().getBoolean("holing.dependencies", false);
-		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", false);
 		log.info("Computing coocs: " + computeCoocs);
 		log.info("Computing dependencies: " + computeDependencies);
 		log.info("Semantifying dependencies: " + semantifyDependencies);
