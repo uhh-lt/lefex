@@ -4,7 +4,10 @@ import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTyp
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import org.apache.hadoop.io.IntWritable;
@@ -38,6 +41,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	boolean semantifyDependencies;
 	boolean computeDependencies;
 	boolean computeCoocs;
+	boolean generatePseudoSenses;
 	
 	private static IntWritable ONE = new IntWritable(1);
 	
@@ -60,6 +64,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 		} catch (CASException e) {
 			log.error("Couldn't create new CAS", e);
 		}
+		generatePseudoSenses = context.getConfiguration().getBoolean("holing.genpseudosenses", false);
 		log.info("Computing coocs: " + computeCoocs);
 		log.info("Computing dependencies: " + computeDependencies);
 		log.info("Semantifying dependencies: " + semantifyDependencies);
@@ -86,17 +91,24 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			posTagger.process(jCas);
 			lemmatizer.process(jCas);
 			
+			Random r = new Random();
+			
+			Map<Token, String> tokenLemmas = new HashMap<Token, String>();
+			
+			int NUM_PSEUDO_SENSES = 3;
+			
 			for (Token token : tokens) {
 				String lemma = token.getLemma().getValue();
+				if (generatePseudoSenses) {
+					int sense = r.nextInt(NUM_PSEUDO_SENSES);
+					lemma += "$$" + sense;
+				}
+				tokenLemmas.put(token, lemma);
+				tokenSet.add(lemma);
 				context.write(new Text("W\t" + lemma), ONE);
 			}
 			
 			if (computeCoocs) {
-				for (Token token : tokens) {
-					String lemma = token.getLemma().getValue();
-					tokenSet.add(lemma);
-				}
-				
 				for (String lemma : tokenSet) {
 					context.write(new Text("CoocF\t" + lemma), ONE);
 				}
@@ -128,8 +140,8 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 					}
 					String sourcePos = source.getPos().getPosValue();
 					String targetPos = target.getPos().getPosValue();
-					String sourceLemma = source.getLemma().getValue();
-					String targetLemma = target.getLemma().getValue();
+					String sourceLemma = tokenLemmas.get(source);//source.getLemma().getValue();
+					String targetLemma = tokenLemmas.get(target);//target.getLemma().getValue();
 					if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
 						String bim = rel + "(@@," + targetLemma + ")";
 						context.write(new Text("DepF\t" + bim), ONE);
