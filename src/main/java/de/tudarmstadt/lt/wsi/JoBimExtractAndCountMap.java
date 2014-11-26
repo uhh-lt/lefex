@@ -3,6 +3,7 @@ package de.tudarmstadt.lt.wsi;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +43,8 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	boolean computeDependencies;
 	boolean computeCoocs;
 	boolean generatePseudoSenses;
+	Set<String> generatePseudoSensesWords;
+	int generatePseudoSensesNum;
 	
 	private static IntWritable ONE = new IntWritable(1);
 	
@@ -65,6 +68,12 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			log.error("Couldn't create new CAS", e);
 		}
 		generatePseudoSenses = context.getConfiguration().getBoolean("holing.genpseudosenses", false);
+		generatePseudoSensesNum = context.getConfiguration().getInt("holing.genpseudosenses.numsenses", 2);
+		String generatePseudoSensesWordsStr = context.getConfiguration().get("holing.genpseudosenses.words");
+		if (generatePseudoSensesWordsStr != null) {
+			generatePseudoSensesWords = new HashSet<String>(
+					Arrays.asList(generatePseudoSensesWordsStr.split(",")));
+		}
 		log.info("Computing coocs: " + computeCoocs);
 		log.info("Computing dependencies: " + computeDependencies);
 		log.info("Semantifying dependencies: " + semantifyDependencies);
@@ -95,12 +104,11 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			
 			Map<Token, String> tokenLemmas = new HashMap<Token, String>();
 			
-			int NUM_PSEUDO_SENSES = 3;
-			
 			for (Token token : tokens) {
 				String lemma = token.getLemma().getValue();
-				if (generatePseudoSenses) {
-					int sense = r.nextInt(NUM_PSEUDO_SENSES);
+				if (generatePseudoSenses &&
+					(generatePseudoSensesWords == null || generatePseudoSensesWords.contains(lemma))) {
+					int sense = r.nextInt(generatePseudoSensesNum);
 					lemma += "$$" + sense;
 				}
 				tokenLemmas.put(token, lemma);
