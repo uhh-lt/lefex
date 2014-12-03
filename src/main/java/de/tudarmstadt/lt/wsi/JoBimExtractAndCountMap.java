@@ -106,7 +106,10 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			
 			for (Token token : tokens) {
 				String lemma = token.getLemma().getValue();
-				if (generatePseudoSenses &&
+				// every 1000th word is replaced by "random word" placeholder
+				if (generatePseudoSenses && r.nextInt(1000) == 0) {
+					lemma = "__RANDOM__";
+				} else if (generatePseudoSenses &&
 					(generatePseudoSensesWords == null || generatePseudoSensesWords.contains(lemma))) {
 					int sense = r.nextInt(generatePseudoSensesNum);
 					lemma += "$$" + sense;
