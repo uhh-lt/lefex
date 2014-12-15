@@ -46,6 +46,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	boolean generatePseudoSenses;
 	Set<String> generatePseudoSensesWords;
 	int generatePseudoSensesNum;
+	int maxSentenceLength;
 	
 	private static IntWritable ONE = new IntWritable(1);
 	
@@ -53,6 +54,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	public void setup(Context context) {
 		log.info("Initializing JoBimExtractAndCount...");
 		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
+		maxSentenceLength = context.getConfiguration().getInt("holing.sentences.maxlength", 100);
 		computeDependencies = context.getConfiguration().getBoolean("holing.dependencies", false);
 		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", false);
 		try {
@@ -92,10 +94,11 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			segmenter.process(jCas);
 			Collection<Token> tokens = JCasUtil.select(jCas, Token.class);
 			Set<String> tokenSet = new HashSet<String>();
-			final int MAX_NUM_TOKENS = 100;
-			if (tokens.size() > MAX_NUM_TOKENS) {
+			if (tokens.size() > maxSentenceLength) {
 				context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
 				return;
+			} else {
+				context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
 			}
 
 			posTagger.process(jCas);
