@@ -28,10 +28,10 @@ import org.apache.uima.util.CasCreationUtils;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.matetools.MateLemmatizer;
-import de.tudarmstadt.ukp.dkpro.core.matetools.MateParser;
-import de.tudarmstadt.ukp.dkpro.core.matetools.MatePosTagger;
+import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 
 
 class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritable> {
@@ -60,10 +60,10 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", false);
 		try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
-			posTagger = AnalysisEngineFactory.createEngine(MatePosTagger.class);
-			lemmatizer = AnalysisEngineFactory.createEngine(MateLemmatizer.class);
+			posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
+			lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
 			if (computeDependencies) {
-				depParser = AnalysisEngineFactory.createEngine(MateParser.class);
+				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
 		} catch (ResourceInitializationException e) {
@@ -155,14 +155,8 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 							continue;
 						}
 					}
-					String sourcePos = null;
-					String targetPos = null;
-					try {
-						sourcePos = source.getPos().getPosValue();
-						targetPos = target.getPos().getPosValue();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+					String sourcePos = source.getPos().getPosValue();
+					String targetPos = target.getPos().getPosValue();
 					String sourceLemma = tokenLemmas.get(source);//source.getLemma().getValue();
 					String targetLemma = tokenLemmas.get(target);//target.getLemma().getValue();
 					if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
@@ -196,11 +190,14 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 				int begin = -1;
 				int end = -1;
 				for (Dependency dep : collapsedDeps) {
-					if (dep.getGovernor() == token) {
+					if (dep.getGovernor() == token && dep.getDependencyType().toLowerCase().equals("mwe")) {
+						depType = "prep_" + dep.getDependent().getCoveredText() + "_" + token.getCoveredText().toLowerCase();
+						toRemove.add(dep);
+					} else if (dep.getGovernor() == token && dep.getDependencyType().toLowerCase().equals("pobj")) {
 						end = dep.getEnd();
 						target = dep.getDependent();
 						toRemove.add(dep);
-					} else if (dep.getDependent() == token) {
+					} else if (dep.getDependent() == token && dep.getDependencyType().toLowerCase().equals("prep")) {
 						begin = dep.getBegin();
 						source = dep.getGovernor();
 						toRemove.add(dep);
