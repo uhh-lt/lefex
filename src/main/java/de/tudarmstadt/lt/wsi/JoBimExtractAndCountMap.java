@@ -30,6 +30,7 @@ import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 
 
 class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritable> {
@@ -59,7 +60,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
 			lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
 			if (computeDependencies) {
-				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
+				depParser = AnalysisEngineFactory.createEngine(StanfordParser.class);
 			}
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
 		} catch (ResourceInitializationException e) {
