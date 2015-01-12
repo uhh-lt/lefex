@@ -154,16 +154,18 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 							continue;
 						}
 					}
-					String sourcePos = source.getPos().getPosValue();
-					String targetPos = target.getPos().getPosValue();
+//					String sourcePos = source.getPos().getPosValue();
+//					String targetPos = target.getPos().getPosValue();
 					String sourceLemma = tokenLemmas.get(source);//source.getLemma().getValue();
 					String targetLemma = tokenLemmas.get(target);//target.getLemma().getValue();
-					if (sourcePos.equals("NN") || sourcePos.equals("NNS")) {
+//					if (sourcePos.equals("NN") || sourcePos.equals("NNS"))
+					{
 						String bim = rel + "(@@," + targetLemma + ")";
 						context.write(new Text("DepF\t" + bim), ONE);
 						context.write(new Text("DepWF\t" + sourceLemma + "\t" + bim), ONE);
 					}
-					if (targetPos.equals("NN") || targetPos.equals("NNS")) {
+//					if (targetPos.equals("NN") || targetPos.equals("NNS"))
+					{
 						String bim = rel + "(" + sourceLemma + ",@@)";
 						context.write(new Text("DepF\t" + bim), ONE);
 						context.write(new Text("DepWF\t" + targetLemma + "\t" + bim), ONE);
