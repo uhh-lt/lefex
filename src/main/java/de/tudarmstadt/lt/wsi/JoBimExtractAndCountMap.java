@@ -61,7 +61,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
 			posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
 			lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
-			if (computeDependencies) {
+			if (computeDependencies) synchronized(MaltParser.class) {
 				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
