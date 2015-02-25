@@ -77,7 +77,7 @@ public class XmlHandler extends DefaultHandler {
 			ArrayList<String> documentTokens = new ArrayList<String>(tokensArr.length - 2);
 			Token lastToken = null;
 			Sentence s = new Sentence(jCas);
-			Sentence headS = null;
+			//Sentence headS = null;
 			for (int i = 0; i < tokensArr.length; i++) {
 				String token = tokensArr[i];
 				if ("**HEAD**".equals(token)) {
@@ -85,7 +85,7 @@ public class XmlHandler extends DefaultHandler {
 				}
 				if ("**/HEAD**".equals(token)) {
 					head = lastToken;
-					headS = s;
+					//headS = s;
 					continue;
 				}
 				documentTokens.add(token);
