@@ -34,7 +34,7 @@ import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import edu.stanford.nlp.util.StringUtils;
 
-public class XmlHandler extends DefaultHandler {
+public class SensEvalRunner extends DefaultHandler {
 	StringBuffer buf;
 	String lexeltId;
 	JCas jCas;
@@ -43,7 +43,7 @@ public class XmlHandler extends DefaultHandler {
 	AnalysisEngine depParser;
 	Writer writer;
 	
-	public XmlHandler(String outputFile) throws CASException, ResourceInitializationException, IOException {
+	public SensEvalRunner(String outputFile) throws CASException, ResourceInitializationException, IOException {
 		posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
 		lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
 		synchronized(MaltParser.class) {
@@ -60,6 +60,9 @@ public class XmlHandler extends DefaultHandler {
 			System.out.println(atts.getValue("id"));
 			buf = new StringBuffer();
 			lexeltId = atts.getValue("id");
+		}
+		else if ("head".equals(qName)) {
+			buf.append("<head>");
 		}
     }
 	
@@ -80,10 +83,10 @@ public class XmlHandler extends DefaultHandler {
 			//Sentence headS = null;
 			for (int i = 0; i < tokensArr.length; i++) {
 				String token = tokensArr[i];
-				if ("**HEAD**".equals(token)) {
+				if ("<head>".equals(token)) {
 					continue;
 				}
-				if ("**/HEAD**".equals(token)) {
+				if ("</head>".equals(token)) {
 					head = lastToken;
 					//headS = s;
 					continue;
@@ -150,6 +153,9 @@ public class XmlHandler extends DefaultHandler {
 				e.printStackTrace();
 			}
 		}
+		else if ("head".equals(qName)) {
+			buf.append("</head>");
+		}
     }
 	
 	@Override
@@ -170,9 +176,14 @@ public class XmlHandler extends DefaultHandler {
 	}
 	
 	public static void main(String[] args) throws Exception {
+		String instanceFile = args[0]; // "/Users/jsimon/MA/SemEval2007Task2/key/data/English_sense_induction2.xml"
+		//Reader modelFileReader = new FileReader(args[1]);
+		String outputFile = args[1]; // "/Users/jsimon/MA/SemEval2007Task2/key/data/English_sense_induction.txt"
+		
 		SAXParserFactory spf = SAXParserFactory.newInstance();
+		//Map<String, List<Cluster<String>>> model = ClusterReaderWriter.readClusters(modelFileReader);
 		SAXParser saxParser = spf.newSAXParser();
-		XmlHandler xmlHandler = new XmlHandler("/Users/jsimon/MA/SemEval2007Task2/key/data/English_sense_induction.txt");
-		saxParser.parse(new File("/Users/jsimon/MA/SemEval2007Task2/key/data/English_sense_induction2.xml"), xmlHandler);
+		SensEvalRunner xmlHandler = new SensEvalRunner(outputFile);
+		saxParser.parse(new File(instanceFile), xmlHandler);
 	}
 }
