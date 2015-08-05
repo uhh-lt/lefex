@@ -19,7 +19,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 public class JoBimExtractAndCount extends Configured implements Tool {
-	public boolean runJob(String inDir, String outDir) throws Exception {
+
+    public boolean runJob(String inDir, String outDir) throws Exception {
 		Configuration conf = getConf();
 		FileSystem fs = FileSystem.get(conf);
 		String _outDir = outDir;
@@ -69,7 +70,7 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 
 	public static void main(final String[] args) throws Exception {
 		Configuration conf = new Configuration();
-		int res = ToolRunner.run(conf, new JoBimExtractAndCount(), args);
+        int res = ToolRunner.run(conf, new JoBimExtractAndCount(), args);
 		System.exit(res);
 	}
 }

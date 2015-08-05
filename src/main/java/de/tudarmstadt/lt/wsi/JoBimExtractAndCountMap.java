@@ -3,12 +3,10 @@ package de.tudarmstadt.lt.wsi;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.apache.hadoop.io.IntWritable;
@@ -41,20 +39,19 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	boolean semantifyDependencies;
 	boolean computeDependencies;
 	boolean computeCoocs;
-	boolean generatePseudoSenses;
-	Set<String> generatePseudoSensesWords;
-	int generatePseudoSensesNum;
 	int maxSentenceLength;
-	
+	boolean allWords;
+
 	private static IntWritable ONE = new IntWritable(1);
 	
 	@Override
 	public void setup(Context context) {
 		log.info("Initializing JoBimExtractAndCount...");
-		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
+		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", true);
 		maxSentenceLength = context.getConfiguration().getInt("holing.sentences.maxlength", 100);
-		computeDependencies = context.getConfiguration().getBoolean("holing.dependencies", false);
-		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", false);
+		computeDependencies = context.getConfiguration().getBoolean("holing.dependencies", true);
+		semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", true);
+        allWords = context.getConfiguration().getBoolean("holing.all_words", true);
 		try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
 			posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
@@ -68,16 +65,10 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 		} catch (CASException e) {
 			log.error("Couldn't create new CAS", e);
 		}
-		generatePseudoSenses = context.getConfiguration().getBoolean("holing.genpseudosenses", false);
-		generatePseudoSensesNum = context.getConfiguration().getInt("holing.genpseudosenses.numsenses", 2);
-		String generatePseudoSensesWordsStr = context.getConfiguration().get("holing.genpseudosenses.words");
-		if (generatePseudoSensesWordsStr != null) {
-			generatePseudoSensesWords = new HashSet<String>(
-					Arrays.asList(generatePseudoSensesWordsStr.split(",")));
-		}
 		log.info("Computing coocs: " + computeCoocs);
 		log.info("Computing dependencies: " + computeDependencies);
 		log.info("Semantifying dependencies: " + semantifyDependencies);
+        log.info("All words: " + allWords);
 		log.info("Ready!");
 	}
 	
@@ -101,43 +92,25 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 
 			posTagger.process(jCas);
 			lemmatizer.process(jCas);
-			
-			Random r = new Random();
-			
 			Map<Token, String> tokenLemmas = new HashMap<Token, String>();
 			
 			for (Token token : tokens) {
 				String lemma = token.getLemma().getValue();
-				// every 1000th word is replaced by "random word" placeholder
-				if (generatePseudoSenses && r.nextInt(1000) == 0) {
-					lemma = "__RANDOM__";
-				} else if (generatePseudoSenses &&
-					(generatePseudoSensesWords == null || generatePseudoSensesWords.contains(lemma))) {
-					int sense = r.nextInt(generatePseudoSensesNum);
-					lemma += "$$" + sense;
-				}
 				tokenLemmas.put(token, lemma);
 				tokenSet.add(lemma);
 				context.write(new Text("W\t" + lemma), ONE);
 				String pos = token.getPos().getPosValue();
-				if (pos.equals("NN") || pos.equals("NNS")) {
+				if (allWords || pos.equals("NN") || pos.equals("NNS")) {
 					context.write(new Text("WNouns\t" + lemma), ONE);
 				}
 			}
 			
 			if (computeCoocs) {
 				for (String lemma : tokenSet) {
-					context.write(new Text("CoocF\t" + lemma), ONE);
-				}
-				
-				for (String lemma : tokenSet) {
-//					String pos = token.getPos().getPosValue();
-//					String lemma = token.getLemma().getValue();
-//					if (pos.equals("NN") || pos.equals("NNS")) {
-						for (String lemma2 : tokenSet) {
-							context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
-						}
-//					}
+                    context.write(new Text("CoocF\t" + lemma), ONE);
+                    for (String lemma2 : tokenSet) {
+                        context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
+                    }
 					context.progress();
 				}
 			}
@@ -160,20 +133,18 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 					String targetPos = target.getPos().getPosValue();
 					String sourceLemma = tokenLemmas.get(source);//source.getLemma().getValue();
 					String targetLemma = tokenLemmas.get(target);//target.getLemma().getValue();
-					if (sourcePos.equals("NN") || sourcePos.equals("NNS"))
-					{
+					if (allWords || sourcePos.equals("NN") || sourcePos.equals("NNS")) {
 						String bim = rel + "(@@," + targetLemma + ")";
 						context.write(new Text("DepF\t" + bim), ONE);
 						context.write(new Text("DepWF\t" + sourceLemma + "\t" + bim), ONE);
 					}
-					if (targetPos.equals("NN") || targetPos.equals("NNS"))
-					{
+
+					if (allWords || targetPos.equals("NN") || targetPos.equals("NNS")) 	{
 						String bim = rel + "(" + sourceLemma + ",@@)";
 						context.write(new Text("DepF\t" + bim), ONE);
 						context.write(new Text("DepWF\t" + targetLemma + "\t" + bim), ONE);
 					}
 					context.progress();
-					
 				}
 			}
 		} catch (Exception e) {
