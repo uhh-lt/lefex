@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -76,80 +77,86 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	public void map(LongWritable key, Text value, Context context)
 		throws IOException, InterruptedException {
 		try {
-			String text = value.toString();
-			jCas.reset();
-			jCas.setDocumentText(text);
-			jCas.setDocumentLanguage("en");
-			segmenter.process(jCas);
-			Collection<Token> tokens = JCasUtil.select(jCas, Token.class);
-			Set<String> tokenSet = new HashSet<String>();
-			if (tokens.size() > maxSentenceLength) {
-				context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
-				return;
-			} else {
-				context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
-			}
+            String text = value.toString();
+            jCas.reset();
+            jCas.setDocumentText(text);
+            jCas.setDocumentLanguage("en");
+            segmenter.process(jCas);
 
-			posTagger.process(jCas);
-			lemmatizer.process(jCas);
-			Map<Token, String> tokenLemmas = new HashMap<Token, String>();
-			
-			for (Token token : tokens) {
-				String lemma = token.getLemma().getValue();
-				tokenLemmas.put(token, lemma);
-				tokenSet.add(lemma);
-				context.write(new Text("W\t" + lemma), ONE);
-				String pos = token.getPos().getPosValue();
-				if (allWords || pos.equals("NN") || pos.equals("NNS")) {
-					context.write(new Text("WNouns\t" + lemma), ONE);
-				}
-			}
-			
-			if (computeCoocs) {
-				for (String lemma : tokenSet) {
-                    context.write(new Text("CoocF\t" + lemma), ONE);
-                    for (String lemma2 : tokenSet) {
-                        context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
+            for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
+
+                Set<String> tokenSet = new HashSet<String>();
+                if (tokens.size() > maxSentenceLength) {
+                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
+                    return;
+                } else {
+                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
+                }
+                posTagger.process(jCas);
+                lemmatizer.process(jCas);
+
+                Map<Token, String> tokenLemmas = new HashMap<Token, String>();
+
+                for (Token token : tokens) {
+                    String lemma = token.getLemma().getValue();
+                    if (lemma == null) continue;
+                    tokenLemmas.put(token, lemma);
+                    tokenSet.add(lemma);
+                    context.write(new Text("W\t" + lemma), ONE);
+                    String pos = token.getPos().getPosValue();
+                    if (allWords || pos.equals("NN") || pos.equals("NNS")) {
+                        context.write(new Text("WNouns\t" + lemma), ONE);
                     }
-					context.progress();
-				}
-			}
-			
-			if (computeDependencies) {
-				depParser.process(jCas);
-				Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
-				Collection<Dependency> depsCollapsed = Util.collapseDependencies(jCas, deps, tokens);
-				for (Dependency dep : depsCollapsed) {
-					Token source = dep.getGovernor();
-					Token target = dep.getDependent();
-					String rel = dep.getDependencyType();
-					if (semantifyDependencies) {
-						rel = Util.semantifyDependencyRelation(rel);
-						if (rel == null) {
-							continue;
-						}
-					}
-					String sourcePos = source.getPos().getPosValue();
-					String targetPos = target.getPos().getPosValue();
-					String sourceLemma = tokenLemmas.get(source);//source.getLemma().getValue();
-					String targetLemma = tokenLemmas.get(target);//target.getLemma().getValue();
-					if (allWords || sourcePos.equals("NN") || sourcePos.equals("NNS")) {
-						String bim = rel + "(@@," + targetLemma + ")";
-						context.write(new Text("DepF\t" + bim), ONE);
-						context.write(new Text("DepWF\t" + sourceLemma + "\t" + bim), ONE);
-					}
+                }
 
-					if (allWords || targetPos.equals("NN") || targetPos.equals("NNS")) 	{
-						String bim = rel + "(" + sourceLemma + ",@@)";
-						context.write(new Text("DepF\t" + bim), ONE);
-						context.write(new Text("DepWF\t" + targetLemma + "\t" + bim), ONE);
-					}
-					context.progress();
-				}
-			}
-		} catch (Exception e) {
-			log.error("Can't process line: " + value.toString(), e);
-			context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
-		}
-	}
+                if (computeCoocs) {
+                    for (String lemma : tokenSet) {
+                        context.write(new Text("CoocF\t" + lemma), ONE);
+                        for (String lemma2 : tokenSet) {
+                            context.write(new Text("CoocWF\t" + lemma + "\t" + lemma2), ONE);
+                        }
+                        context.progress();
+                    }
+                }
+
+                if (computeDependencies) {
+                    depParser.process(jCas);
+                    Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
+                    Collection<Dependency> depsCollapsed = Util.collapseDependencies(jCas, deps, tokens);
+                    for (Dependency dep : depsCollapsed) {
+                        Token source = dep.getGovernor();
+                        Token target = dep.getDependent();
+                        String rel = dep.getDependencyType();
+                        if (semantifyDependencies) {
+                            rel = Util.semantifyDependencyRelation(rel);
+                            if (rel == null) {
+                                continue;
+                            }
+                        }
+                        String sourcePos = source.getPos().getPosValue();
+                        String targetPos = target.getPos().getPosValue();
+                        String sourceLemma = tokenLemmas.get(source);
+                        String targetLemma = tokenLemmas.get(target);
+                        if (sourceLemma == null || targetLemma == null) continue;
+                        if (allWords || sourcePos.equals("NN") || sourcePos.equals("NNS")) {
+                            String bim = rel + "(@@," + targetLemma + ")";
+                            context.write(new Text("DepF\t" + bim), ONE);
+                            context.write(new Text("DepWF\t" + sourceLemma + "\t" + bim), ONE);
+                        }
+
+                        if (allWords || targetPos.equals("NN") || targetPos.equals("NNS")) {
+                            String bim = rel + "(" + sourceLemma + ",@@)";
+                            context.write(new Text("DepF\t" + bim), ONE);
+                            context.write(new Text("DepWF\t" + targetLemma + "\t" + bim), ONE);
+                        }
+                        context.progress();
+                    }
+                }
+            }
+        }catch(Exception e){
+            log.error("Can't process line: " + value.toString(), e);
+            context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
+        }
+    }
 }
