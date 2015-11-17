@@ -59,7 +59,7 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 	public int run(String[] args) throws Exception {
 		System.out.println("args:" + Arrays.asList(args));
 		if (args.length != 2) {
-			System.out.println("Usage: </path/to/sentences> </path/to/output>");
+			System.out.println("Usage: <path-to-sentences> <path-to-output>");
 			System.exit(1);
 		}
 		String inDir = args[0];

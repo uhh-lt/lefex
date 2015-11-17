@@ -58,6 +58,6 @@ public class Util {
 		case "dobj":
 			return "obj";
 		}
-		return null;
+		return rel;
 	}
 }
