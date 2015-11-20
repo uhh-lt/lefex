@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 public class JoBimExtractAndCountTest {
 
     @Test
-    public void testMain() throws Exception {
+    public void testDefaultConfiguration() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
@@ -34,7 +34,7 @@ public class JoBimExtractAndCountTest {
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
-        conf.setBoolean("holing.dependencies", true);
+        conf.setStrings("holing.type", "dependency");
         conf.setBoolean("holing.dependencies.semantify", true);
         conf.setBoolean("holing.nouns_only", false);
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
@@ -42,20 +42,93 @@ public class JoBimExtractAndCountTest {
         ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
 
         // Parse the output and check the output data
-        String depWFPath = (new File(outputDir, "DepWF-r-00000")).getAbsolutePath();
-        List<String> lines = Files.readAllLines(Paths.get(depWFPath), Charset.forName("UTF-8"));
-        assertTrue(lines.size() == 704);
-        System.out.println("Number of lines int the file:" + lines.size());
-        System.out.println("True:" + (lines.size() == 704));
+        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+        assertTrue("Number of lines is wrong.", lines.size() == 704);
 
         Set<String> expectedDeps = new HashSet<>(Arrays.asList("punct(@,date)", "prep_at(list,@)", "det(@,headstock)"));
-
         for(String line : lines) {
            String[] fields = line.split("\t");
            String dep = fields.length == 3 ? fields[1] : "";
            if (expectedDeps.contains(dep)) expectedDeps.remove(dep);
         }
 
-        assertTrue(expectedDeps.size() == 0); // all expected deps are found
+        assertTrue("Some features are missing in the file.", expectedDeps.size() == 0); // all expected deps are found
+    }
+
+
+    @Test
+    public void testTrigram() throws Exception {
+        // Initialization
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        String inputPath = file.getAbsolutePath();
+        String outputDir = inputPath + "-out";
+        FileUtils.deleteDirectory(new File(outputDir));
+        System.out.println("Input text: " + inputPath);
+        System.out.println("Output directory: "+  outputDir);
+
+        // Action
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", false);
+        conf.setInt("holing.sentences.maxlength", 100);
+        conf.setStrings("holing.type", "trigram");
+        conf.setBoolean("holing.dependencies.semantify", true);
+        conf.setBoolean("holing.nouns_only", false);
+        conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
+
+        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+
+        // Parse the output and check the output data
+        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+        assertTrue("Number of lines is wrong.", lines.size() == 404);
+
+        Set<String> expectedFeatures = new HashSet<>(Arrays.asList("place_@_#","#_@_yet", "sum_@_a", "give_@_of"));
+        for(String line : lines) {
+            String[] fields = line.split("\t");
+            String feature = fields.length == 3 ? fields[1] : "";
+            if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
+        }
+
+        assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
+    }
+
+    @Test
+    public void tesTrigramNoLemmatization() throws Exception {
+        // Initialization
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        String inputPath = file.getAbsolutePath();
+        String outputDir = inputPath + "-out";
+        FileUtils.deleteDirectory(new File(outputDir));
+        System.out.println("Input text: " + inputPath);
+        System.out.println("Output directory: "+  outputDir);
+
+        // Action
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", false);
+        conf.setInt("holing.sentences.maxlength", 100);
+        conf.setStrings("holing.type", "trigram");
+        conf.setBoolean("holing.dependencies.semantify", true);
+        conf.setBoolean("holing.nouns_only", false);
+        conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
+        conf.setBoolean("holing.lemmatize", false);
+
+        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+
+        // Parse the output and check the output data
+        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+        assertTrue("Number of lines is wrong.", lines.size() == 404);
+
+        Set<String> expectedFeatures = new HashSet<>(Arrays.asList("was_@_very","#_@_yet", "sum_@_a", "gave_@_of", "other_@_products"));
+        for(String line : lines) {
+            String[] fields = line.split("\t");
+            String feature = fields.length == 3 ? fields[1] : "";
+            if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
+        }
+
+        assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
     }
 }

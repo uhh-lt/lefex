@@ -49,8 +49,8 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 		MultipleOutputs.addNamedOutput(job, "WNouns", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "CoocF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "DepF", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "DepWF", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "WF", TextOutputFormat.class, Text.class, IntWritable.class);
 		
 		job.setJobName("NounSenseInduction:JoBimExtractAndCount");
 		return job.waitForCompletion(true);
