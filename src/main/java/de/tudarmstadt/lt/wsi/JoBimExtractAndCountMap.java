@@ -29,8 +29,6 @@ import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 
-
-
 class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final String BEGEND_CHAR = "#"; // character before and in the end of any text
     static final IntWritable ONE = new IntWritable(1);
@@ -51,9 +49,6 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 
 	@Override
 	public void setup(Context context) {
-
-        context.getConfiguration().set("event", "hasOccured");
-
 		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
         log.info("Computing coocs: " + computeCoocs);
 
