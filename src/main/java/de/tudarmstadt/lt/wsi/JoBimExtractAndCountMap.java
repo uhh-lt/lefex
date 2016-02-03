@@ -30,7 +30,6 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 
 class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritable> {
-    static final String BEGEND_CHAR = "#"; // character before and in the end of any text
     static final IntWritable ONE = new IntWritable(1);
 
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
@@ -154,9 +153,9 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
     }
 
     private void trigramHoling(Context context, Collection<Token> tokens) throws AnalysisEngineProcessException, IOException, InterruptedException {
-        String center = BEGEND_CHAR;
-        String left = BEGEND_CHAR;
-        String right = BEGEND_CHAR;
+        String center = Const.BEGEND_CHAR;
+        String left = Const.BEGEND_CHAR;
+        String right = Const.BEGEND_CHAR;
 
         System.out.println(">>>" + tokens.size());
 
@@ -166,7 +165,7 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
             if (right == null) continue;
             System.out.print(right + " ");
 
-            if (!right.equals(BEGEND_CHAR) && !center.equals(BEGEND_CHAR)) {
+            if (!right.equals(Const.BEGEND_CHAR) && !center.equals(Const.BEGEND_CHAR)) {
                 String bim = left + "_@_" + right;
                 context.write(new Text("F\t" + bim), ONE);
                 context.write(new Text("WF\t" + center + "\t" + bim), ONE);
@@ -177,8 +176,8 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
             center = right;
         }
 
-        if (!right.equals(BEGEND_CHAR)) {
-            String bim = left + "_@_" + BEGEND_CHAR;
+        if (!right.equals(Const.BEGEND_CHAR)) {
+            String bim = left + "_@_" + Const.BEGEND_CHAR;
             context.write(new Text("F\t" + bim), ONE);
             context.write(new Text("WF\t" + right + "\t" + bim), ONE);
             context.progress();
