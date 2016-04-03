@@ -3,13 +3,16 @@ package de.tudarmstadt.lt.wsi;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import org.apache.uima.jcas.JCas;
-
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import org.apache.uima.jcas.tcas.Annotation;
+
 
 public class Util {
+
+    public static String NOT_SEP = ";";
+
 	public static Collection<Dependency> collapseDependencies(JCas jCas, Collection<Dependency> deps, Collection<Token> tokens) {
 		List<Dependency> collapsedDeps = new ArrayList<>(deps);
 		for (Token token : tokens) {
@@ -60,4 +63,25 @@ public class Util {
 		}
 		return rel;
 	}
+
+    public static String join(List<String> list, String sep) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        for (String str: list) {
+            i++;
+            if (!str.equals("") && !str.contains(sep)) {
+                sb.append(str);
+                if (i < list.size()) sb.append(sep);
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    public static void printCasAnnotations(JCas jCas) {
+        System.out.println("All annotations of the JCas");
+        for (Annotation a : jCas.getAnnotationIndex()) {
+            System.out.println(a.getType().toString());
+        }
+    }
+
 }
