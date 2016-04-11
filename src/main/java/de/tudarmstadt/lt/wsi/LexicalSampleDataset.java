@@ -1,9 +1,8 @@
 package de.tudarmstadt.lt.wsi;
 
-import javax.ws.rs.HEAD;
 import java.util.List;
 
-public class LexicalSampleContext {
+public class LexicalSampleDataset {
     /**
      * Parses stores, and provides access to a WSD lexical sample dataset line in the format (tab separated):
      * "context_id  target  target_pos  target_position gold_sense_ids  predict_sense_ids   golden_related  predict_related context"
@@ -11,8 +10,8 @@ public class LexicalSampleContext {
      * '2 add.v.1 add v 51,57 add%2:32:01::/4  Lewinsky wrote "Return to Sender" on the envelope, adding, "You must be morons to send me this letter!"'
      * */
 
-    public static final String HEADER = "context_id\ttarget\ttarget_pos\ttarget_position\tgold_sense_ids\tpredict_sense_ids\tgolden_related\tpredict_related\tcontext";
-    public static final String FEATURES_HEADER_SUPPLIMENT = "\tword_features\tholing_features\ttarget_holing_features";
+    public static final String HEADER_9_COLS = "context_id\ttarget\ttarget_pos\ttarget_position\tgold_sense_ids\tpredict_sense_ids\tgolden_related\tpredict_related\tcontext";
+    public static final String HEADER_SUPPLIMENT_FEATURES = "\tword_features\tholing_features\ttarget_holing_features";
 
     public String context_id;
     public String target;
@@ -27,7 +26,7 @@ public class LexicalSampleContext {
     public String holing_features;
     public String target_holing_features;
 
-    public LexicalSampleContext(String line) {
+    public LexicalSampleDataset(String line) {
         String[] fields = line.split("\t");
         if (fields.length < 9) {
             System.out.println("Warning: wrong lexical sample line '" + line + "'");
@@ -48,8 +47,8 @@ public class LexicalSampleContext {
     }
 
     public String getHeader(boolean withFeatures){
-        if (withFeatures) return HEADER + FEATURES_HEADER_SUPPLIMENT;
-        else return HEADER;
+        if (withFeatures) return HEADER_9_COLS + HEADER_SUPPLIMENT_FEATURES;
+        else return HEADER_9_COLS;
     }
 
     public void setFeatures(List<String> wordFeatures, List<String> holingFeatures, List<String> targetHolingFeatures) {

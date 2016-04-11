@@ -51,7 +51,7 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
             segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
             posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
             lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
-            if (holingType.equals("dependency")) synchronized(MaltParser.class) {
+            if (holingType.contains("dependency")) synchronized(MaltParser.class) {
                 depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
             }
             jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
@@ -65,18 +65,18 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
     @Override
     public void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
         try {
-            LexicalSampleContext lexSample = new LexicalSampleContext(line.toString());
-
+            LexicalSampleDataset lexSample = new LexicalSampleDataset(line.toString());
             jCas.reset();
             jCas.setDocumentText(lexSample.context);
             jCas.setDocumentLanguage("en");
             segmenter.process(jCas);
 
             List<String> wordFeatures = new LinkedList<>();
-            List<String> holingFeatures = new LinkedList <>();
+            List<String> holingAllFeatures = new LinkedList <>();
             List<String> holingTargetFeatures = new LinkedList <>();
 
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+                // Increment word features
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
                 context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
                 if(lemmatize) {
@@ -92,19 +92,21 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
                     wordFeatures.add(word);
                 }
 
-                ListTuple res;
-                if (holingType.equals("dependency")) {
-                    res = dependencyHoling(tokens, lexSample.target);
-                } else if(holingType.equals("trigram")) {
-                    res = trigramHoling(tokens, lexSample.target);
-                } else {
-                    res = dependencyHoling(tokens, lexSample.target);
+                // Increment holing features
+                if (holingType.contains("dependency")) {
+                    HolingResult res = dependencyHoling(tokens, lexSample.target);
+                    holingAllFeatures.addAll(res.allFeatures);
+                    holingTargetFeatures.addAll(res.targetFeatures);
                 }
-                holingFeatures.addAll(res.first);
-                holingTargetFeatures.addAll(res.second);
+
+                if(holingType.contains("trigram")) {
+                    HolingResult res = trigramHoling(tokens, lexSample.target);
+                    holingAllFeatures.addAll(res.allFeatures);
+                    holingTargetFeatures.addAll(res.targetFeatures);
+                }
             }
 
-            lexSample.setFeatures(wordFeatures, holingFeatures, holingTargetFeatures);
+            lexSample.setFeatures(wordFeatures, holingAllFeatures, holingTargetFeatures);
             context.write(new Text(lexSample.asString()), ONE);
 
         } catch(Exception e){
@@ -113,43 +115,40 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
         }
     }
 
-    private ListTuple trigramHoling(Collection<Token> tokens, String lexSampleTarget) throws AnalysisEngineProcessException, IOException, InterruptedException {
+    private HolingResult trigramHoling(Collection<Token> tokens, String lexSampleTarget) throws AnalysisEngineProcessException, IOException, InterruptedException {
         String center = Const.BEGEND_CHAR;
         String left = Const.BEGEND_CHAR;
         String right = Const.BEGEND_CHAR;
-        List<String> contextFeatures = new LinkedList<>();
-        List<String> lexSampleFeatures = new LinkedList<>();
-
+        List<String> allFeatures = new LinkedList<>();
+        List<String> targetFeatures = new LinkedList<>();
 
         for (Token rightToken : tokens) {
             if (lemmatize) right = rightToken.getLemma().getValue();
             else right = rightToken.getCoveredText();
             if (right == null) continue;
-            System.out.print(right + " ");
 
             if (!right.equals(Const.BEGEND_CHAR) && !center.equals(Const.BEGEND_CHAR)) {
                 String bim = left + "_@_" + right;
-                contextFeatures.add(bim);
+                allFeatures.add(bim);
                 if (center.toLowerCase().equals(lexSampleTarget.toLowerCase())){
-                    lexSampleFeatures.add(bim);
+                    targetFeatures.add(bim);
                 }
             }
-
             left = center;
             center = right;
         }
 
         if (!right.equals(Const.BEGEND_CHAR)) {
             String bim = left + "_@_" + Const.BEGEND_CHAR;
-            contextFeatures.add(bim);
+            allFeatures.add(bim);
         }
 
-        return new ListTuple(contextFeatures, lexSampleFeatures);
+        return new HolingResult(allFeatures, targetFeatures);
     }
 
-    private ListTuple dependencyHoling(Collection<Token> tokens, String lexSampleTarget) throws AnalysisEngineProcessException, IOException, InterruptedException {
-        List<String> contextFeatures = new LinkedList<>();
-        List<String> lexSampleFeatures = new LinkedList<>();
+    private HolingResult dependencyHoling(Collection<Token> tokens, String lexSampleTarget) throws AnalysisEngineProcessException, IOException, InterruptedException {
+        List<String> allFeatures = new LinkedList<>();
+        List<String> targetFeatures = new LinkedList<>();
         depParser.process(jCas);
         Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
         Collection<Dependency> depsCollapsed = Util.collapseDependencies(jCas, deps, tokens);
@@ -166,19 +165,19 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
 
             // Save dependency features, position of hole is always as in the text
             String bim = target.getBegin() < source.getBegin() ? rel + "(" + targetLemma + ",@)" : rel + "(@," + targetLemma + ")";  //
-            contextFeatures.add(bim);
+            allFeatures.add(bim);
             if (sourceLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())){
-                lexSampleFeatures.add(bim);
+                targetFeatures.add(bim);
             }
 
             String ibim = target.getBegin() < source.getBegin() ? rel + "(@," + sourceLemma + ")" : rel + "(" + sourceLemma + ",@)";
-            contextFeatures.add(ibim);
+            allFeatures.add(ibim);
             if (targetLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())){
-                lexSampleFeatures.add(ibim);
+                targetFeatures.add(ibim);
             }
         }
 
-        return new ListTuple(contextFeatures, lexSampleFeatures);
+        return new HolingResult(allFeatures, targetFeatures);
     }
 }
 
