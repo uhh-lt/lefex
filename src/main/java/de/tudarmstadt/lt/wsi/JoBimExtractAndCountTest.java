@@ -56,6 +56,109 @@ public class JoBimExtractAndCountTest {
         assertTrue("Some features are missing in the file.", expectedDeps.size() == 0); // all expected deps are found
     }
 
+    @Test
+    public void testTrigramHolingPRJ() throws Exception {
+        // Initialization
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("data/python-ruby-jaguar.txt").getFile());
+        String inputPath = file.getAbsolutePath();
+        String outputDir = inputPath + "-out";
+        FileUtils.deleteDirectory(new File(outputDir));
+        System.out.println("Input text: " + inputPath);
+        System.out.println("Output directory: "+  outputDir);
+
+
+        // Action
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", false);
+        conf.setInt("holing.sentences.maxlength", 100);
+        conf.setStrings("holing.type", "trigram");
+        conf.setBoolean("holing.nouns_only", false);
+        conf.setInt("holing.processeach", 1);
+        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+    }
+
+    @Test
+    public void testTrigramWithCoocsBig() throws Exception {
+        // Initialization
+        ClassLoader classLoader = getClass().getClassLoader();
+        String inputPath = "/Users/sasha/Desktop/debug/h1";
+        String outputDir = inputPath + "-out";
+        FileUtils.deleteDirectory(new File(outputDir));
+        System.out.println("Input text: " + inputPath);
+        System.out.println("Output directory: "+  outputDir);
+
+        // Action
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", true);
+        conf.setInt("holing.sentences.maxlength", 100);
+        conf.setStrings("holing.type", "trigram");
+        conf.setBoolean("holing.nouns_only", false);
+        conf.setInt("holing.processeach", 1);
+
+        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+    }
+
+    @Test
+    public void testTrigramWithCoocsBigEachTenth() throws Exception {
+        // Initialization
+        ClassLoader classLoader = getClass().getClassLoader();
+        String inputPath = "/Users/sasha/Desktop/debug/h1";
+        String outputDir = inputPath + "-out";
+        FileUtils.deleteDirectory(new File(outputDir));
+        System.out.println("Input text: " + inputPath);
+        System.out.println("Output directory: "+  outputDir);
+
+        // Action
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", true);
+        conf.setInt("holing.sentences.maxlength", 100);
+        conf.setStrings("holing.type", "trigram");
+        conf.setBoolean("holing.nouns_only", false);
+        conf.setInt("holing.processeach", 10);
+
+        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+    }
+
+    @Test
+    public void testTrigramWithCoocs() throws Exception {
+        // Initialization
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        String inputPath = file.getAbsolutePath();
+        String outputDir = inputPath + "-out";
+        FileUtils.deleteDirectory(new File(outputDir));
+        System.out.println("Input text: " + inputPath);
+        System.out.println("Output directory: "+  outputDir);
+
+        // Action
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", true);
+        conf.setInt("holing.sentences.maxlength", 100);
+        conf.setStrings("holing.type", "trigram");
+        conf.setBoolean("holing.nouns_only", false);
+
+        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+
+        // Parse the output and check the output data
+        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+
+        // Check existance of the co-occurrence files
+
+        // Check that the co-occurrence file contains a hidden co-occurrence pair
+
+//        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+//        assertTrue("Number of lines is wrong.", lines.size() == 404);
+//
+//        Set<String> expectedFeatures = new HashSet<>(Arrays.asList("place_@_#","#_@_yet", "sum_@_a", "give_@_of"));
+//        for(String line : lines) {
+//            String[] fields = line.split("\t");
+//            String feature = fields.length == 3 ? fields[1] : "";
+//            if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
+//        }
+//
+//        assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
+    }
 
     @Test
     public void testTrigram() throws Exception {

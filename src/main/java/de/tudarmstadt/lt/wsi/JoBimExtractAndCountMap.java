@@ -45,9 +45,13 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	boolean nounsOnly;
     boolean nounNounDependenciesOnly;
     boolean lemmatize;
+    int processEach;
 
 	@Override
 	public void setup(Context context) {
+        processEach = context.getConfiguration().getInt("holing.processeach", 1);
+        log.info("Process each: " + processEach);
+
 		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
         log.info("Computing coocs: " + computeCoocs);
 
@@ -90,7 +94,11 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
 	@Override
 	public void map(LongWritable key, Text value, Context context)
 		throws IOException, InterruptedException {
-		try {
+
+        context.getCounter("de.tudarmstadt.lt.wsi", "NUM_MAPS").increment(1);
+        if (context.getCounter("de.tudarmstadt.lt.wsi", "NUM_MAPS").getValue() % processEach != 0) return;
+
+        try {
             String text = value.toString();
             jCas.reset();
             jCas.setDocumentText(text);
@@ -153,34 +161,35 @@ class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritab
     }
 
     private void trigramHoling(Context context, Collection<Token> tokens) throws AnalysisEngineProcessException, IOException, InterruptedException {
-        String center = Const.BEGEND_CHAR;
-        String left = Const.BEGEND_CHAR;
-        String right = Const.BEGEND_CHAR;
+        try {
+            String center = Const.BEGEND_CHAR;
+            String left = Const.BEGEND_CHAR;
+            String right = Const.BEGEND_CHAR;
 
-        System.out.println(">>>" + tokens.size());
+            for (Token rightToken : tokens) {
+                if (lemmatize) right = rightToken.getLemma().getValue();
+                else right = rightToken.getCoveredText();
+                if (right == null) continue;
 
-        for (Token rightToken : tokens) {
-            if (lemmatize) right = rightToken.getLemma().getValue();
-            else right = rightToken.getCoveredText();
-            if (right == null) continue;
-            System.out.print(right + " ");
+                if (!right.equals(Const.BEGEND_CHAR) && !center.equals(Const.BEGEND_CHAR)) {
+                    String bim = left + "_@_" + right;
+                    context.write(new Text("F\t" + bim), ONE);
+                    context.write(new Text("WF\t" + center + "\t" + bim), ONE);
+                    context.progress();
+                }
 
-            if (!right.equals(Const.BEGEND_CHAR) && !center.equals(Const.BEGEND_CHAR)) {
-                String bim = left + "_@_" + right;
-                context.write(new Text("F\t" + bim), ONE);
-                context.write(new Text("WF\t" + center + "\t" + bim), ONE);
-                context.progress();
+                left = center;
+                center = right;
             }
 
-            left = center;
-            center = right;
-        }
-
-        if (!right.equals(Const.BEGEND_CHAR)) {
-            String bim = left + "_@_" + Const.BEGEND_CHAR;
-            context.write(new Text("F\t" + bim), ONE);
-            context.write(new Text("WF\t" + right + "\t" + bim), ONE);
-            context.progress();
+            if (!right.equals(Const.BEGEND_CHAR)) {
+                String bim = left + "_@_" + Const.BEGEND_CHAR;
+                context.write(new Text("F\t" + bim), ONE);
+                context.write(new Text("WF\t" + right + "\t" + bim), ONE);
+                context.progress();
+            }
+        } catch (Exception exc) {
+            context.getCounter("de.tudarmstadt.lt.wsi", "HOLING_EXCEPTIONS").increment(1);
         }
     }
 

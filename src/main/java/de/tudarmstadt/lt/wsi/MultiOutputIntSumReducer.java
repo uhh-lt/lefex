@@ -8,7 +8,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 public class MultiOutputIntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-//	Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
 	private MultipleOutputs<Text, IntWritable> mos;
 	
 	@Override

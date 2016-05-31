@@ -1,8 +1,10 @@
 package de.tudarmstadt.lt.wsi;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
+
 import java.io.IOException;
 import java.util.*;
+
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -51,7 +53,7 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
             segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
             posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
             lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
-            if (holingType.equals("dependency")) synchronized(MaltParser.class) {
+            if (holingType.equals("dependency")) synchronized (MaltParser.class) {
                 depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
             }
             jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
@@ -73,13 +75,13 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
             segmenter.process(jCas);
 
             List<String> wordFeatures = new LinkedList<>();
-            List<String> holingFeatures = new LinkedList <>();
-            List<String> holingTargetFeatures = new LinkedList <>();
+            List<String> holingFeatures = new LinkedList<>();
+            List<String> holingTargetFeatures = new LinkedList<>();
 
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
                 context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
-                if(lemmatize) {
+                if (lemmatize) {
                     posTagger.process(jCas);
                     lemmatizer.process(jCas);
                 }
@@ -88,14 +90,15 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
                     String word;
                     if (lemmatize) word = wordToken.getLemma().getValue();
                     else word = wordToken.getCoveredText();
-                    if (word == null || word.equals(",") || word.equals(".") || word.equals(";") || word.equals("\"") || word.equals("'")) continue;
+                    if (word == null || word.equals(",") || word.equals(".") || word.equals(";") || word.equals("\"") || word.equals("'"))
+                        continue;
                     wordFeatures.add(word);
                 }
 
                 ListTuple res;
                 if (holingType.equals("dependency")) {
                     res = dependencyHoling(tokens, lexSample.target);
-                } else if(holingType.equals("trigram")) {
+                } else if (holingType.equals("trigram")) {
                     res = trigramHoling(tokens, lexSample.target);
                 } else {
                     res = dependencyHoling(tokens, lexSample.target);
@@ -107,9 +110,9 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
             lexSample.setFeatures(wordFeatures, holingFeatures, holingTargetFeatures);
             context.write(new Text(lexSample.asString()), ONE);
 
-        } catch(Exception e){
+        } catch (Exception e) {
             log.error("Can't process line: " + line.toString(), e);
-            context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
+            context.getCounter("de.tudarmstadt.lt", "NUM_MAP_ERRORS").increment(1);
         }
     }
 
@@ -120,28 +123,29 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
         List<String> contextFeatures = new LinkedList<>();
         List<String> lexSampleFeatures = new LinkedList<>();
 
+        try {
+            for (Token rightToken : tokens) {
+                if (lemmatize) right = rightToken.getLemma().getValue();
+                else right = rightToken.getCoveredText();
+                if (right == null) continue;
 
-        for (Token rightToken : tokens) {
-            if (lemmatize) right = rightToken.getLemma().getValue();
-            else right = rightToken.getCoveredText();
-            if (right == null) continue;
-            System.out.print(right + " ");
-
-            if (!right.equals(Const.BEGEND_CHAR) && !center.equals(Const.BEGEND_CHAR)) {
-                String bim = left + "_@_" + right;
-                contextFeatures.add(bim);
-                if (center.toLowerCase().equals(lexSampleTarget.toLowerCase())){
-                    lexSampleFeatures.add(bim);
+                if (!right.equals(Const.BEGEND_CHAR) && !center.equals(Const.BEGEND_CHAR)) {
+                    String bim = left + "_@_" + right;
+                    contextFeatures.add(bim);
+                    if (center.toLowerCase().equals(lexSampleTarget.toLowerCase())) {
+                        lexSampleFeatures.add(bim);
+                    }
                 }
+                left = center;
+                center = right;
             }
 
-            left = center;
-            center = right;
-        }
-
-        if (!right.equals(Const.BEGEND_CHAR)) {
-            String bim = left + "_@_" + Const.BEGEND_CHAR;
-            contextFeatures.add(bim);
+            if (!right.equals(Const.BEGEND_CHAR)) {
+                String bim = left + "_@_" + Const.BEGEND_CHAR;
+                contextFeatures.add(bim);
+            }
+        } catch (Exception exc) {
+            log.info("Holing exception");
         }
 
         return new ListTuple(contextFeatures, lexSampleFeatures);
@@ -167,13 +171,13 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
             // Save dependency features, position of hole is always as in the text
             String bim = target.getBegin() < source.getBegin() ? rel + "(" + targetLemma + ",@)" : rel + "(@," + targetLemma + ")";  //
             contextFeatures.add(bim);
-            if (sourceLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())){
+            if (sourceLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())) {
                 lexSampleFeatures.add(bim);
             }
 
             String ibim = target.getBegin() < source.getBegin() ? rel + "(@," + sourceLemma + ")" : rel + "(" + sourceLemma + ",@)";
             contextFeatures.add(ibim);
-            if (targetLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())){
+            if (targetLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())) {
                 lexSampleFeatures.add(ibim);
             }
         }
