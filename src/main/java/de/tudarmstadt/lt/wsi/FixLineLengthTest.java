@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 public class FixLineLengthTest {
 
     /*
-    @Test
+    @HadoopTest
     public void testOnBigText() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
