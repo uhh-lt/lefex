@@ -3,6 +3,8 @@ package de.tudarmstadt.lt.wsi;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 import java.io.IOException;
 import java.util.*;
+
+import de.tudarmstadt.lt.wsi.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -151,14 +153,14 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
         List<String> targetFeatures = new LinkedList<>();
         depParser.process(jCas);
         Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
-        Collection<Dependency> depsCollapsed = Util.collapseDependencies(jCas, deps, tokens);
+        Collection<Dependency> depsCollapsed = Format.collapseDependencies(jCas, deps, tokens);
         for (Dependency dep : depsCollapsed) {
 
             // Get dependency
             Token source = dep.getGovernor();
             Token target = dep.getDependent();
             String rel = dep.getDependencyType();
-            if (semantifyDependencies) rel = Util.semantifyDependencyRelation(rel);
+            if (semantifyDependencies) rel = Format.semantifyDependencyRelation(rel);
             String sourceLemma = source.getLemma().getValue();
             String targetLemma = target.getLemma().getValue();
             if (sourceLemma == null || targetLemma == null) continue;

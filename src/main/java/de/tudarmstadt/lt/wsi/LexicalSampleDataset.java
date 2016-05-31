@@ -1,5 +1,7 @@
 package de.tudarmstadt.lt.wsi;
 
+import de.tudarmstadt.lt.wsi.Utils.Format;
+
 import java.util.List;
 
 public class LexicalSampleDataset {
@@ -52,9 +54,9 @@ public class LexicalSampleDataset {
     }
 
     public void setFeatures(List<String> wordFeatures, List<String> holingFeatures, List<String> targetHolingFeatures) {
-        word_features = Util.join(wordFeatures, Const.LIST_SEP);
-        holing_features = Util.join(holingFeatures, Const.LIST_SEP);
-        target_holing_features = Util.join(targetHolingFeatures, Const.LIST_SEP);
+        word_features = Format.join(wordFeatures, Const.LIST_SEP);
+        holing_features = Format.join(holingFeatures, Const.LIST_SEP);
+        target_holing_features = Format.join(targetHolingFeatures, Const.LIST_SEP);
     }
 
     public String asString() {

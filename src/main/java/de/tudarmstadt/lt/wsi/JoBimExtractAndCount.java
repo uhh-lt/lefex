@@ -52,7 +52,7 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "WF", TextOutputFormat.class, Text.class, IntWritable.class);
 		
-		job.setJobName("NounSenseInduction:JoBimExtractAndCount");
+		job.setJobName("JoSimText - Feature Extraction");
 		return job.waitForCompletion(true);
 	}
 

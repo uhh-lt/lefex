@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.wsi.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,9 +9,30 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import org.apache.uima.jcas.tcas.Annotation;
 
 
-public class Util {
+public class Format {
 
     public static String NOT_SEP = ";";
+
+	private static String trimScore(String score){
+		String[] parts = score.split("[:#]");
+		return parts[0];
+	}
+
+	public static String flatten(List<String> list, int maxLength, boolean keepScores, String sep) {
+		StringBuilder sb = new StringBuilder();
+		int i = 0;
+		for (String str : list) {
+			if(i > maxLength) break;
+
+			str = str.replace(",", NOT_SEP);
+			str = str.replace(sep, NOT_SEP);
+			if (keepScores) sb.append(str);
+			else sb.append(trimScore(str));
+			sb.append(sep);
+			i++;
+		}
+		return sb.toString().trim();
+	}
 
 	public static Collection<Dependency> collapseDependencies(JCas jCas, Collection<Dependency> deps, Collection<Token> tokens) {
 		List<Dependency> collapsedDeps = new ArrayList<>(deps);
