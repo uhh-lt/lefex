@@ -39,14 +39,21 @@ public class ExractLexicalSampleFeatures extends Configured implements Tool {
         job.setOutputValueClass(IntWritable.class);
         //job.setReducerClass(NothingReducer.class);
 
-        job.setJobName("NounSenseInduction:ExtractLexicalSampleFeatures");
+        job.setJobName("JoSimText: ExtractLexicalSampleFeatures");
         return job.waitForCompletion(true);
     }
 
     public int run(String[] args) throws Exception {
         System.out.println("args:" + Arrays.asList(args));
         if (args.length != 2) {
-            System.out.println("Usage: <input-lexical-sample-dataset> <output-lexical-sample-dataset-with-features>");
+            System.out.println("Usage: <input-lexsample> <output-lexsample-with-features>");
+            System.out.println("<input-lexical-sample>\tA csv lexical sample dataset with 9 columns.");
+            System.out.println("<output-lexical-samplewith-features>\tA csv lexical sample dataset with 12 columns" +
+                    ": 3 extra columns store features extracted from the context ''.");
+            System.out.println("This class takes the following paramemeters via the MapReduce options e.g. -D:");
+            System.out.println("holing.type\t'dependency' or 'trigram' or 'dependency+trigram'. Default -- 'dependency'");
+            System.out.println("holing.dependencies.semantify\ttrue or false .Default --  true");
+            System.out.println("holing.lemmatize\ttrue or false. Default -- true");
             System.exit(1);
         }
         String inDir = args[0];
