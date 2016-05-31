@@ -88,10 +88,14 @@ public class ExtractLexicalSamplesFeaturesTest {
         run(inputPath, conf);
     }
 
+    // /Users/alex/work/joint/eval/contextualization-eval/data is https://github.com/tudarmstadt-lt/context-eval/tree/master/data
+
     @Test
     public void testOnSemEval() throws Exception {
-        String inputPath = "/Users/sasha/Desktop/debug/wsd/Dataset-SemEval-2013-13.csv";
-        run(inputPath);
+        String inputPath = "/Users/alex/work/joint/eval/contextualization-eval/data/Dataset-SemEval-2013-13.csv";
+        Configuration conf = new Configuration();
+        conf.setStrings("holing.type", "dependency+trigram");
+        run(inputPath, conf);
     }
 
     @Test
@@ -99,7 +103,6 @@ public class ExtractLexicalSamplesFeaturesTest {
         String inputPath = "/Users/alex/work/joint/eval/contextualization-eval/data/Dataset-TWSI-2.csv";
         Configuration conf = new Configuration();
         conf.setStrings("holing.type", "dependency+trigram");
-        conf.setInt("mapred.map.tasks", 4);
         run(inputPath, conf);
     }
 }
