@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 public class JoBimExtractAndCountTest {
 
     @Test
-    public void testDefaultConfiguration() throws Exception {
+    public void testDependencyHoling() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
