@@ -1,7 +1,6 @@
 package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
 import java.util.Arrays;
-
 import de.tudarmstadt.lt.jst.Utils.MultiOutputIntSumReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -19,8 +18,8 @@ import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-public class HadoopMain extends Configured implements Tool {
 
+public class HadoopMain extends Configured implements Tool {
     public boolean runJob(String inDir, String outDir) throws Exception {
 		Configuration conf = getConf();
 		FileSystem fs = FileSystem.get(conf);
@@ -47,7 +46,6 @@ public class HadoopMain extends Configured implements Tool {
 		// Turn off the default output ("part-..."), we don't need it
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
 		MultipleOutputs.addNamedOutput(job, "W", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "WNouns", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "CoocF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);

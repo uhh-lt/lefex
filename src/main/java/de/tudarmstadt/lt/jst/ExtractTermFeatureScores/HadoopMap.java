@@ -33,7 +33,7 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
 
-    Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
+    Logger log = Logger.getLogger("de.tudarmstadt.lt.jst");
 	AnalysisEngine segmenter;
 	AnalysisEngine posTagger;
 	AnalysisEngine lemmatizer;
@@ -43,7 +43,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	String holingType;
 	boolean computeCoocs;
 	int maxSentenceLength;
-	boolean nounsOnly;
     boolean nounNounDependenciesOnly;
     boolean lemmatize;
     int processEach;
@@ -64,9 +63,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         semantifyDependencies = context.getConfiguration().getBoolean("holing.dependencies.semantify", true);
         log.info("Semantifying dependencies: " + semantifyDependencies);
-
-        nounsOnly = context.getConfiguration().getBoolean("holing.nouns_only", false);
-        log.info("Nouns only: " + nounsOnly);
 
         lemmatize = context.getConfiguration().getBoolean("holing.lemmatize", true);
         log.info("Lemmatize: " + lemmatize);
@@ -96,8 +92,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	public void map(LongWritable key, Text value, Context context)
 		throws IOException, InterruptedException {
 
-        context.getCounter("de.tudarmstadt.lt.wsi", "NUM_MAPS").increment(1);
-        if (context.getCounter("de.tudarmstadt.lt.wsi", "NUM_MAPS").getValue() % processEach != 0) return;
+        context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAPS").increment(1);
+        if (context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAPS").getValue() % processEach != 0) return;
 
         try {
             String text = value.toString();
@@ -110,10 +106,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
 
                 if (tokens.size() > maxSentenceLength) {
-                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
+                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_SKIPPED_SENTENCES").increment(1);
                     return;
                 } else {
-                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
+                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_PROCESSED_SENTENCES").increment(1);
                 }
                 if(lemmatize) {
                     posTagger.process(jCas);
@@ -125,16 +121,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     String word;
                     if (lemmatize) word = wordToken.getLemma().getValue();
                     else word = wordToken.getCoveredText();
+
                     if (word == null) continue;
-
                     words.add(word);
-
                     context.write(new Text("W\t" + word), ONE);
-                    if(lemmatize) {
-                        String pos = wordToken.getPos().getPosValue();
-                        if (nounsOnly && (!pos.equals("NN") || !pos.equals("NNS"))) continue;
-                        context.write(new Text("WNouns\t" + word), ONE);
-                    }
                 }
 
                 if (computeCoocs) {
@@ -190,7 +180,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 context.progress();
             }
         } catch (Exception exc) {
-            context.getCounter("de.tudarmstadt.lt.wsi", "HOLING_EXCEPTIONS").increment(1);
+            context.getCounter("de.tudarmstadt.lt.jst", "HOLING_EXCEPTIONS").increment(1);
         }
     }
 
