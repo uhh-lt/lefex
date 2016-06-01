@@ -14,6 +14,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.file.tfile.Utils;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 import org.apache.uima.analysis_engine.AnalysisEngine;
@@ -29,6 +30,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
+import de.tudarmstadt.lt.jst.Utils.Resources;
 
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
@@ -39,20 +41,25 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	AnalysisEngine lemmatizer;
 	AnalysisEngine depParser;
 	JCas jCas;
-	boolean semantifyDependencies;
+    boolean semantifyDependencies;
 	String holingType;
 	boolean computeCoocs;
 	int maxSentenceLength;
     boolean nounNounDependenciesOnly;
     boolean lemmatize;
     int processEach;
+    HashSet<String> mweVocabulary;
 
 	@Override
 	public void setup(Context context) {
-        processEach = context.getConfiguration().getInt("holing.processeach", 1);
+        processEach = context.getConfiguration().getInt("holing.process_each", 1);
         log.info("Process each: " + processEach);
 
-		computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
+        String mwePath = context.getConfiguration().getStrings("holing.mwe.vocabulary", "")[0];
+        log.info("MWE vocabulary: " + mwePath);
+        mweVocabulary = Resources.loadVoc(mwePath);
+
+        computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
         log.info("Computing coocs: " + computeCoocs);
 
         maxSentenceLength = context.getConfiguration().getInt("holing.sentences.maxlength", 100);
@@ -72,10 +79,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
-			//if (lemmatize) {
+			if (lemmatize) {
                 posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
                 lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
-            //}
+            }
 			if (holingType.equals("dependency")) synchronized(MaltParser.class) {
 				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
@@ -87,10 +94,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 		}
 	}
 
-
 	@Override
-	public void map(LongWritable key, Text value, Context context)
-		throws IOException, InterruptedException {
+	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
         context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAPS").increment(1);
         if (context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAPS").getValue() % processEach != 0) return;

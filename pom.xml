@@ -19,7 +19,7 @@
   		<artifactId>
   			de.tudarmstadt.ukp.dkpro.core.stanfordnlp-gpl
   		</artifactId>
-  		<version>1.6.2</version>
+  		<version>1.7.0</version>
   	</dependency>
 	  <dependency>
 		  <groupId>junit</groupId>
@@ -28,11 +28,6 @@
 	  </dependency>
 
 
-	  <!--<dependency>-->
-		  <!--<groupId>org.apache.commons</groupId>-->
-		  <!--<artifactId>commons-io</artifactId>-->
-		  <!--<version>1.3.2</version>-->
-	  <!--</dependency>-->
       <dependency>
           <groupId>commons-io</groupId>
           <artifactId>commons-io</artifactId>
@@ -49,36 +44,36 @@
   		<artifactId>
   			de.tudarmstadt.ukp.dkpro.core.maltparser-asl
   		</artifactId>
-  		<version>1.6.2</version>
+  		<version>1.7.0</version>
   	</dependency>
   	<dependency>
   		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
   		<artifactId>
   			de.tudarmstadt.ukp.dkpro.core.opennlp-asl
   		</artifactId>
-  		<version>1.5.0</version>
+  		<version>1.7.0</version>
   	</dependency>
-  	<dependency>
-  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
-  		<artifactId>
-  			de.tudarmstadt.ukp.dkpro.core.opennlp-model-token-en-maxent
-  		</artifactId>
-  		<version>20120616.0</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
-  		<artifactId>
-  			de.tudarmstadt.ukp.dkpro.core.opennlp-model-tagger-en-maxent
-  		</artifactId>
-  		<version>20120616.0</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
-  		<artifactId>
-  			de.tudarmstadt.ukp.dkpro.core.opennlp-model-sentence-en-maxent
-  		</artifactId>
-  		<version>20120616.0</version>
-  	</dependency>
+  	<!--<dependency>-->
+  		<!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
+  		<!--<artifactId>-->
+  			<!--de.tudarmstadt.ukp.dkpro.core.opennlp-model-token-en-maxent-->
+  		<!--</artifactId>-->
+  		<!--<version>20120616.0</version>-->
+  	<!--</dependency>-->
+  	<!--<dependency>-->
+  		<!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
+  		<!--<artifactId>-->
+  			<!--de.tudarmstadt.ukp.dkpro.core.opennlp-model-tagger-en-maxent-->
+  		<!--</artifactId>-->
+  		<!--<version>20120616.0</version>-->
+  	<!--</dependency>-->
+  	<!--<dependency>-->
+  		<!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
+  		<!--<artifactId>-->
+  			<!--de.tudarmstadt.ukp.dkpro.core.opennlp-model-sentence-en-maxent-->
+  		<!--</artifactId>-->
+  		<!--<version>20120616.0</version>-->
+  	<!--</dependency>-->
   	<dependency>
   		<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
   		<artifactId>
