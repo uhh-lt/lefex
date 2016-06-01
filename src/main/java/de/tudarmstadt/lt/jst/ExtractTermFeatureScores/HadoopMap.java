@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
@@ -7,7 +7,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.tudarmstadt.lt.wsi.Utils.Format;
+import de.tudarmstadt.lt.jst.Const;
+import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
+import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -28,7 +30,7 @@ import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 
-class JoBimExtractAndCountMap extends Mapper<LongWritable, Text, Text, IntWritable> {
+class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
 
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");

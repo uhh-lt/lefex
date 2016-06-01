@@ -1,7 +1,8 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
 import java.util.Arrays;
 
+import de.tudarmstadt.lt.jst.Utils.MultiOutputIntSumReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -18,7 +19,7 @@ import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-public class JoBimExtractAndCount extends Configured implements Tool {
+public class HadoopMain extends Configured implements Tool {
 
     public boolean runJob(String inDir, String outDir) throws Exception {
 		Configuration conf = getConf();
@@ -32,10 +33,10 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 		conf.setBoolean("mapred.output.compress", false);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
-		job.setJarByClass(JoBimExtractAndCount.class);
+		job.setJarByClass(HadoopMain.class);
 		FileInputFormat.addInputPath(job, new Path(inDir));
 		FileOutputFormat.setOutputPath(job, new Path(_outDir));
-		job.setMapperClass(JoBimExtractAndCountMap.class);
+		job.setMapperClass(HadoopMap.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(IntWritable.class);
 		job.setOutputKeyClass(Text.class);
@@ -70,7 +71,7 @@ public class JoBimExtractAndCount extends Configured implements Tool {
 
 	public static void main(final String[] args) throws Exception {
 		Configuration conf = new Configuration();
-        int res = ToolRunner.run(conf, new JoBimExtractAndCount(), args);
+        int res = ToolRunner.run(conf, new HadoopMain(), args);
 		System.exit(res);
 	}
 }

@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.Utils;
 
 import java.io.IOException;
 

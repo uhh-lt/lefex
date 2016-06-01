@@ -8,7 +8,7 @@
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/gpl-3.0.txt
  ******************************************************************************/
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.Utils;
 
 import static org.apache.uima.fit.util.JCasUtil.select;
 

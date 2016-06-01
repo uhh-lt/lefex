@@ -1,5 +1,6 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.FixLineLength;
 
+import de.tudarmstadt.lt.jst.Utils.NothingReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -14,7 +15,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import java.util.Arrays;
 
-public class FixLineLength extends Configured implements Tool {
+public class HadoopMain extends Configured implements Tool {
     public boolean runJob(String inDir, String outDir) throws Exception {
 		Configuration conf = getConf();
 		FileSystem fs = FileSystem.get(conf);
@@ -27,11 +28,11 @@ public class FixLineLength extends Configured implements Tool {
 		conf.setBoolean("mapred.output.compress", false);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
-		job.setJarByClass(FixLineLength.class);
+		job.setJarByClass(HadoopMain.class);
 		FileInputFormat.addInputPath(job, new Path(inDir));
 		FileOutputFormat.setOutputPath(job, new Path(_outDir));
 
-		job.setMapperClass(FixLineLengthMap.class);
+		job.setMapperClass(HadoopMap.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(Text.class);
 		job.setReducerClass(NothingReducer.class);
@@ -54,7 +55,7 @@ public class FixLineLength extends Configured implements Tool {
 
 	public static void main(final String[] args) throws Exception {
 		Configuration conf = new Configuration();
-        int res = ToolRunner.run(conf, new FixLineLength(), args);
+        int res = ToolRunner.run(conf, new HadoopMain(), args);
 		System.exit(res);
 	}
 }

@@ -1,6 +1,7 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.ExtractLexicalSampleFeatures;
 
-import de.tudarmstadt.lt.wsi.Utils.Format;
+import de.tudarmstadt.lt.jst.Const;
+import de.tudarmstadt.lt.jst.Utils.Format;
 
 import java.util.List;
 

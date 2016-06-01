@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -17,7 +17,7 @@ import java.util.Set;
 import static org.junit.Assert.*;
 
 
-public class JoBimExtractAndCountTest {
+public class HadoopTest {
 
     @Test
     public void testDependencyHoling() throws Exception {
@@ -39,7 +39,7 @@ public class JoBimExtractAndCountTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
 
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
 
         // Parse the output and check the output data
         String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
@@ -75,7 +75,7 @@ public class JoBimExtractAndCountTest {
         conf.setStrings("holing.type", "trigram");
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 1);
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
     }
 
     @Test
@@ -96,7 +96,7 @@ public class JoBimExtractAndCountTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 1);
 
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
     }
 
     @Test
@@ -117,7 +117,7 @@ public class JoBimExtractAndCountTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 10);
 
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
     }
 
     @Test
@@ -138,7 +138,7 @@ public class JoBimExtractAndCountTest {
         conf.setStrings("holing.type", "trigram");
         conf.setBoolean("holing.nouns_only", false);
 
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
 
         // Parse the output and check the output data
         String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
@@ -180,7 +180,7 @@ public class JoBimExtractAndCountTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
 
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
 
         // Parse the output and check the output data
         String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
@@ -218,7 +218,7 @@ public class JoBimExtractAndCountTest {
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
         conf.setBoolean("holing.lemmatize", false);
 
-        ToolRunner.run(conf, new JoBimExtractAndCount(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
 
         // Parse the output and check the output data
         String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();

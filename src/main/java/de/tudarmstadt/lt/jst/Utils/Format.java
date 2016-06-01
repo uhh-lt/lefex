@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi.Utils;
+package de.tudarmstadt.lt.jst.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;

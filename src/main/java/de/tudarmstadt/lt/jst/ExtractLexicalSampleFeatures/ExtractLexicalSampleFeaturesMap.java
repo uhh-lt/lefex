@@ -1,10 +1,12 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.ExtractLexicalSampleFeatures;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 import java.io.IOException;
 import java.util.*;
 
-import de.tudarmstadt.lt.wsi.Utils.Format;
+import de.tudarmstadt.lt.jst.Const;
+import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
+import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;

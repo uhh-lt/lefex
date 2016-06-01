@@ -1,12 +1,12 @@
-package de.tudarmstadt.lt.wsi.ExtractSynCon;
+package de.tudarmstadt.lt.jst.ExtractSynCon;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 import java.io.IOException;
 import java.util.*;
 
-import de.tudarmstadt.lt.wsi.StanfordLemmatizer;
-import de.tudarmstadt.lt.wsi.Utils.Format;
+import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
+import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -25,7 +25,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
-import de.tudarmstadt.lt.wsi.Utils.DefaultDict;
+import de.tudarmstadt.lt.jst.Utils.DefaultDict;
 
 
 public class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {

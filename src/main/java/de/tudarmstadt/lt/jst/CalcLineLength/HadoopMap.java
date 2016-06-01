@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.CalcLineLength;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -19,7 +19,7 @@ import java.util.Collection;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
-class CalcLineLengthMap extends Mapper<LongWritable, Text, LongWritable, Text> {
+class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
 	AnalysisEngine segmenter;
 	JCas jCas;

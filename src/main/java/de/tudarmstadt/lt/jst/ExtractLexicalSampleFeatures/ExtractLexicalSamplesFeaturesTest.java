@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.ExtractLexicalSampleFeatures;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;

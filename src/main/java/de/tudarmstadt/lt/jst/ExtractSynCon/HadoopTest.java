@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi.ExtractSynCon;
+package de.tudarmstadt.lt.jst.ExtractSynCon;
 
 
 import org.apache.commons.io.FileUtils;

@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.wsi;
+package de.tudarmstadt.lt.jst.FixLineLength;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -14,13 +14,14 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 
-public class CalcLineLengthTest {
+public class HadoopTest {
 
-    @Test
-    public void testRunDefault() throws Exception {
+    /*
+    @HadoopTest
+    public void testOnBigText() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        File file = new File("/Users/alex/work/joint/corpora/wiki-1m.txt");
         String inputPath = file.getAbsolutePath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));
@@ -29,20 +30,14 @@ public class CalcLineLengthTest {
 
         // Action
         Configuration conf = new Configuration();
-        conf.setBoolean("tokenize", false);
-        ToolRunner.run(conf, new CalcLineLength(), new String[]{inputPath, outputDir});
-
-        // Parse the output and check the output data
-        String outputPath = (new File(outputDir, "part-r-00000")).getAbsolutePath();
-        List<String> lines = Files.readAllLines(Paths.get(outputPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 10);
-    }
+        ToolRunner.run(conf, new FixLineLength(), new String[]{inputPath, outputDir});
+    }*/
 
     @Test
-    public void testRunLemmatize() throws Exception {
+    public void testRunJob() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        File file = new File(classLoader.getResource("data/ukwac-sample-10-oneliner.txt").getFile());
         String inputPath = file.getAbsolutePath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));
@@ -51,8 +46,7 @@ public class CalcLineLengthTest {
 
         // Action
         Configuration conf = new Configuration();
-        conf.setBoolean("tokenize", true);
-        ToolRunner.run(conf, new CalcLineLength(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
 
         // Parse the output and check the output data
         String outputPath = (new File(outputDir, "part-r-00000")).getAbsolutePath();
