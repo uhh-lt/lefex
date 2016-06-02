@@ -45,7 +45,7 @@ public class HadoopTest {
         // Parse the output and check the output data
         String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 704);
+        assertTrue("Number of lines is wrong.", lines.size() == 826);
 
         Set<String> expectedDeps = new HashSet<>(Arrays.asList("punct(@,date)", "prep_at(list,@)", "det(@,headstock)"));
         for(String line : lines) {
@@ -82,7 +82,7 @@ public class HadoopTest {
         // Parse the output and check the output data
         String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        //assertTrue("Number of lines is wrong.", lines.size() == 704);
+        assertTrue("Number of lines is wrong.", lines.size() == 826);
 
         Set<String> expectedDeps = new HashSet<>(Arrays.asList("punct(@,date)", "prep_at(list,@)", "det(@,headstock)"));
         for(String line : lines) {
@@ -93,7 +93,6 @@ public class HadoopTest {
 
         assertTrue("Some features are missing in the file.", expectedDeps.size() == 0); // all expected deps are found
     }
-
 
     @Test
     public void testTrigramHolingPRJ() throws Exception {

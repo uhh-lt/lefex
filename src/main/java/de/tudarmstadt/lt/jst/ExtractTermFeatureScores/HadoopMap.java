@@ -5,6 +5,7 @@ import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTyp
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.tudarmstadt.lt.jst.Const;
@@ -107,7 +108,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
 	@Override
 	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-
         context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAPS").increment(1);
         if (context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAPS").getValue() % processEach != 0) return;
 
@@ -146,9 +146,11 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     context.write(new Text("W\t" + word), ONE);
                 }
 
-                for (NGram mwe : JCasUtil.selectCovered(jCas, NGram.class, sentence.getBegin(), sentence.getEnd())) {
+                List<NGram> ngrams = JCasUtil.selectCovered(jCas, NGram.class, sentence.getBegin(), sentence.getEnd());
+                for (NGram mwe : ngrams) {
                     if (computeCoocs) words.add(mwe.getCoveredText());
                     context.write(new Text("W\t" + mwe.getCoveredText()), ONE);
+                    //System.out.println(">>>>>>>>>> " + mwe.getCoveredText());
                 }
 
                 if (computeCoocs) {
@@ -162,11 +164,11 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 }
 
                 if (holingType.equals("dependency")) {
-                    dependencyHoling(context, tokens, sentence.getBegin(), sentence.getEnd());
+                    dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
                 } else if(holingType.equals("trigram")) {
                     trigramHoling(context, tokens);
                 } else {
-                    dependencyHoling(context, tokens, sentence.getBegin(), sentence.getEnd());
+                    dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
                 }
             }
         } catch(Exception e){
@@ -208,34 +210,52 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-    private void dependencyHoling(Context context, Collection<Token> tokens, int begin, int end) throws AnalysisEngineProcessException, IOException, InterruptedException {
-        Collection<Dependency> depsCovered = JCasUtil.selectCovered(jCas, Dependency.class, begin, end);
-        Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
+    private String findNgram(List<NGram> ngrams, int beginSpan, int endSpan){
+        for (NGram ngram : ngrams){
+            if (ngram.getBegin() >= beginSpan && ngram.getEnd() >= endSpan) return ngram.getCoveredText();
+        }
+        return "";
+    }
+
+    private void dependencyHoling(Context context, Collection<Token> tokens, List<NGram> ngrams, int beginSentence, int endSentence)
+            throws AnalysisEngineProcessException, IOException, InterruptedException
+    {
+        Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, beginSentence, endSentence);
         Collection<Dependency> depsCollapsed = Format.collapseDependencies(jCas, deps, tokens);
         for (Dependency dep : depsCollapsed) {
             // Get dependency
-            Token source = dep.getGovernor();
-            Token target = dep.getDependent();
+            Token governor = dep.getGovernor();
+            Token dependent = dep.getDependent();
             String rel = dep.getDependencyType();
             if (semantifyDependencies) rel = Format.semantifyDependencyRelation(rel);
-            String sourcePos = source.getPos().getPosValue();
-            String targetPos = target.getPos().getPosValue();
-            String sourceLemma = source.getLemma().getValue();
-            String targetLemma = target.getLemma().getValue();
-            if (sourceLemma == null || targetLemma == null) continue;
+            String governorPos = governor.getPos().getPosValue();
+            String dependentPos = dependent.getPos().getPosValue();
+            String governorLemma = governor.getLemma().getValue();
+            String dependentLemma = dependent.getLemma().getValue();
+            if (governorLemma == null || dependentLemma == null) continue;
 
             // Save the dependency as a feature
-            if (nounNounDependenciesOnly && (!sourcePos.equals("NN") || !sourcePos.equals("NNS"))) continue;
-            String bim = target.getBegin() < source.getBegin() ? rel + "(" + targetLemma + ",@)" : rel + "(@," + targetLemma + ")";
+            if (nounNounDependenciesOnly && (!governorPos.equals("NN") || !governorPos.equals("NNS"))) continue;
+            String bim = dependent.getBegin() < governor.getBegin() ? rel + "(" + dependentLemma + ",@)" : rel + "(@," + dependentLemma + ")";
             context.write(new Text("F\t" + bim), ONE);
-            context.write(new Text("WF\t" + sourceLemma + "\t" + bim), ONE);
+            context.write(new Text("WF\t" + governorLemma + "\t" + bim), ONE);
 
             // Save inverse dependency as a feature
-            if (nounNounDependenciesOnly && (!targetPos.equals("NN") && !targetPos.equals("NNS"))) continue;
-            String ibim = target.getBegin() < source.getBegin() ? rel + "(@," + sourceLemma + ")" : rel + "(" + sourceLemma + ",@)";
+            if (nounNounDependenciesOnly && (!dependentPos.equals("NN") && !dependentPos.equals("NNS"))) continue;
+            String ibim = dependent.getBegin() < governor.getBegin() ? rel + "(@," + governorLemma + ")" : rel + "(" + governorLemma + ",@)";
 
             context.write(new Text("F\t" + ibim), ONE);
-            context.write(new Text("WF\t" + targetLemma + "\t" + ibim), ONE);
+            context.write(new Text("WF\t" + dependentLemma + "\t" + ibim), ONE);
+
+            // Generate features for multiword expressions
+            String governorNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
+            String dependantNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
+            if (!governorNgram.equals("")) {
+                context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
+            if (!dependantNgram.equals("")) {
+                context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
+            }
+
             context.progress();
         }
     }

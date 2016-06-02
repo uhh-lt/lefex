@@ -186,7 +186,8 @@ public class DictionaryAnnotator extends JCasAnnotator_ImplBase {
         String[] sentenceToEnd = new String[tokens.size()];
         for (int j = 0; j < tokensToSentenceEnd.size(); j++) {
             if(useLemmas) {
-                sentenceToEnd[j] = tokensToSentenceEnd.get(j).getLemma().getValue();
+                if (tokensToSentenceEnd.get(j).getLemma() != null) sentenceToEnd[j] = tokensToSentenceEnd.get(j).getLemma().getValue();
+                else sentenceToEnd[j] = tokensToSentenceEnd.get(j).getCoveredText();
             } else {
                 sentenceToEnd[j] = tokensToSentenceEnd.get(j).getCoveredText();
             }

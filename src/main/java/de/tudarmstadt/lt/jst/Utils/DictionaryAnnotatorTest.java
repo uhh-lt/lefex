@@ -20,11 +20,11 @@ package de.tudarmstadt.lt.jst.Utils;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngine;
 import static org.apache.uima.fit.util.JCasUtil.selectSingle;
+import static org.apache.uima.fit.util.JCasUtil.select;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.sun.javafx.sg.prism.NGArc;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.NGram;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.uima.analysis_engine.AnalysisEngine;
@@ -37,6 +37,7 @@ import org.junit.Test;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import java.util.ArrayList;
 
 // before merge to dkpro:
 // - remove imports below and all fix all paths to persons.txt
@@ -135,11 +136,13 @@ public class DictionaryAnnotatorTest
 
         JCas jcas = JCasFactory.createJCas();
         TokenBuilder<Token, Sentence> tb = new TokenBuilder<Token, Sentence>(Token.class, Sentence.class);
-        tb.buildTokens(jcas, "I am John Silver 's ghost . Green apples grow on a tree. Use one of these yellow taxis if you are in NYC.");
-
+        tb.buildTokens(jcas, "I am John Silver 's ghost. Isaac Newton laid down basics of the modern Physics. santa klaus has a red nose.");
         ae.process(jcas);
 
-        NGram ne = selectSingle(jcas, NGram.class);
-        assertEquals("John Silver", ne.getCoveredText());
+        ArrayList<NGram> matches = new ArrayList<>(select(jcas, NGram.class));
+        assertEquals(matches.size(), 3);
+        assertEquals(matches.get(0).getCoveredText(), "John Silver");
+        assertEquals(matches.get(1).getCoveredText(), "Isaac Newton");
+        assertEquals(matches.get(2).getCoveredText(), "santa klaus");
     }
 }
