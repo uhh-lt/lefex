@@ -10,11 +10,11 @@ import java.util.Set;
 import de.tudarmstadt.lt.jst.Const;
 import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.NGram;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.file.tfile.Utils;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 import org.apache.uima.analysis_engine.AnalysisEngine;
@@ -30,7 +30,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
-import de.tudarmstadt.lt.jst.Utils.Resources;
+//import de.tudarmstadt.ukp.dkpro.core.dictionaryannotator.DictionaryAnnotator;
+import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
@@ -40,13 +41,16 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	AnalysisEngine posTagger;
 	AnalysisEngine lemmatizer;
 	AnalysisEngine depParser;
-	JCas jCas;
+    AnalysisEngine dictTagger;
+
+    JCas jCas;
     boolean semantifyDependencies;
 	String holingType;
 	boolean computeCoocs;
 	int maxSentenceLength;
     boolean nounNounDependenciesOnly;
     boolean lemmatize;
+    boolean lookupMWE;
     int processEach;
     HashSet<String> mweVocabulary;
 
@@ -57,7 +61,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         String mwePath = context.getConfiguration().getStrings("holing.mwe.vocabulary", "")[0];
         log.info("MWE vocabulary: " + mwePath);
-        mweVocabulary = Resources.loadVoc(mwePath);
+        lookupMWE = !mwePath.equals("");
 
         computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
         log.info("Computing coocs: " + computeCoocs);
@@ -86,6 +90,13 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 			if (holingType.equals("dependency")) synchronized(MaltParser.class) {
 				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
+            if(lookupMWE){
+                dictTagger = AnalysisEngineFactory.createEngine(DictionaryAnnotator.class,
+                    DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NGram.class,
+                    DictionaryAnnotator.PARAM_MODEL_LOCATION, mwePath,
+                    DictionaryAnnotator.PARAM_EXTENDED_MATCH, "true");
+            }
+
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
 		} catch (ResourceInitializationException e) {
 			log.error("Couldn't initialize analysis engine", e);
@@ -106,6 +117,12 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             jCas.setDocumentText(text);
             jCas.setDocumentLanguage("en");
             segmenter.process(jCas);
+            if(lemmatize) {
+                posTagger.process(jCas);
+                lemmatizer.process(jCas);
+            }
+            if (lookupMWE) dictTagger.process(jCas);
+            if (holingType.equals("dependency")) depParser.process(jCas);
 
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
@@ -116,11 +133,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 } else {
                     context.getCounter("de.tudarmstadt.lt.jst", "NUM_PROCESSED_SENTENCES").increment(1);
                 }
-                if(lemmatize) {
-                    posTagger.process(jCas);
-                    lemmatizer.process(jCas);
-                }
 
+                // W: word count
                 Set<String> words = new HashSet<>();
                 for (Token wordToken : tokens) {
                     String word;
@@ -128,8 +142,13 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     else word = wordToken.getCoveredText();
 
                     if (word == null) continue;
-                    words.add(word);
+                    if (computeCoocs) words.add(word);
                     context.write(new Text("W\t" + word), ONE);
+                }
+
+                for (NGram mwe : JCasUtil.selectCovered(jCas, NGram.class, sentence.getBegin(), sentence.getEnd())) {
+                    if (computeCoocs) words.add(mwe.getCoveredText());
+                    context.write(new Text("W\t" + mwe.getCoveredText()), ONE);
                 }
 
                 if (computeCoocs) {
@@ -143,11 +162,11 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 }
 
                 if (holingType.equals("dependency")) {
-                    dependencyHoling(context, tokens);
+                    dependencyHoling(context, tokens, sentence.getBegin(), sentence.getEnd());
                 } else if(holingType.equals("trigram")) {
                     trigramHoling(context, tokens);
                 } else {
-                    dependencyHoling(context, tokens);
+                    dependencyHoling(context, tokens, sentence.getBegin(), sentence.getEnd());
                 }
             }
         } catch(Exception e){
@@ -189,8 +208,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-    private void dependencyHoling(Context context, Collection<Token> tokens) throws AnalysisEngineProcessException, IOException, InterruptedException {
-        depParser.process(jCas);
+    private void dependencyHoling(Context context, Collection<Token> tokens, int begin, int end) throws AnalysisEngineProcessException, IOException, InterruptedException {
+        Collection<Dependency> depsCovered = JCasUtil.selectCovered(jCas, Dependency.class, begin, end);
         Collection<Dependency> deps = JCasUtil.select(jCas, Dependency.class);
         Collection<Dependency> depsCollapsed = Format.collapseDependencies(jCas, deps, tokens);
         for (Dependency dep : depsCollapsed) {
