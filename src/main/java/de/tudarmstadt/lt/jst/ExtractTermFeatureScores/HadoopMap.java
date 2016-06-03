@@ -53,6 +53,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     boolean lemmatize;
     boolean lookupMWE;
     int processEach;
+    boolean useNgramSelfFeatures;
     HashSet<String> mweVocabulary;
 
 	@Override
@@ -63,6 +64,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         String mwePath = context.getConfiguration().getStrings("holing.mwe.vocabulary", "")[0];
         log.info("MWE vocabulary: " + mwePath);
         lookupMWE = !mwePath.equals("");
+
+        useNgramSelfFeatures = context.getConfiguration().getBoolean("holing.mwe.self_features", false);
+        log.info("Use Ngram self features: " + useNgramSelfFeatures);
 
         computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
         log.info("Computing coocs: " + computeCoocs);
@@ -234,7 +238,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             String dependentLemma = dependent.getLemma().getValue();
             if (governorLemma == null || dependentLemma == null) continue;
 
-            // Save the dependency as a feature
+            // Save the dependenc1y as a feature
             if (nounNounDependenciesOnly && (!governorPos.equals("NN") || !governorPos.equals("NNS"))) continue;
             String bim = dependent.getBegin() < governor.getBegin() ? rel + "(" + dependentLemma + ",@)" : rel + "(@," + dependentLemma + ")";
             context.write(new Text("F\t" + bim), ONE);
@@ -250,11 +254,13 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             // Generate features for multiword expressions
             String governorNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
             String dependantNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
-            if (!governorNgram.equals("")) {
-                context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
-            if (!dependantNgram.equals("")) {
-                context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
-            }
+//            if (!governorNgram.equals("") && governorNgram.equals(dependantNgram) && !useNgramSelfFeatures) {
+//                //
+//            } else {
+                if (!governorNgram.equals("")) context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
+                if (!dependantNgram.equals(""))
+                    context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
+            //}
 
             context.progress();
         }
