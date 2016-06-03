@@ -1,15 +1,19 @@
 package de.tudarmstadt.lt.jst.Sandbox;
 
-
-//import com.sun.source.tree.AssertTree;
 import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import de.tudarmstadt.lt.jst.Utils.Resources;
+import de.tudarmstadt.lt.jst.Utils.Format;
 
 import java.util.HashSet;
 
 public class Worksheet {
+    @Test
+    public void ensureDirTest() throws Exception {
+        Format.ensureDir("/Users/sasha/Desktop/mwe-c");
+    }
+
     @Test
     public void containsTest() throws Exception {
         String holingType = "dependency+trigram";

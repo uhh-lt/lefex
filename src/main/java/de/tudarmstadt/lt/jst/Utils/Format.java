@@ -1,5 +1,6 @@
 package de.tudarmstadt.lt.jst.Utils;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,25 +15,45 @@ import org.apache.uima.jcas.tcas.Annotation;
 public class Format {
 
     public static String NOT_SEP = ";";
+    public static String NODES = "nodes.csv";
+    public static String EDGES = "edges.csv";
 
-    public void printDependenciesGephiCSV(Collection<Dependency> deps) {
+
+    public static void ensureDir(String directoryPath){
+        File dir = new File(directoryPath);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+    }
+
+    public static void printDependenciesGephiCSV(Collection<Dependency> deps, String outputDir) {
+        ensureDir(outputDir);
+
         // Edges file
-        System.out.println("\n\nSource,Target,Type,Id,Label,Weight");
-        int id = 0;
         HashSet<String> nodes = new HashSet<>();
-        for (Dependency dep : deps) {
-            String src = dep.getGovernor().getCoveredText().replace(",", ";");
-            String dst = dep.getDependent().getCoveredText().replace(",", ";");
-            String label = dep.getDependencyType();
-            System.out.printf("%s,%s,Directed,%d,%s,1.0\n", src, dst, ++id, label);
-            nodes.add(src);
-            nodes.add(dst);
+        try (Writer edgesFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDir + "/" + EDGES), "utf-8"))) {
+            edgesFile.write("Source,Target,Type,Id,Label,Weight\n");
+            int id = 0;
+            for (Dependency dep : deps) {
+                String src = dep.getGovernor().getCoveredText().replace(",", ";");
+                String dst = dep.getDependent().getCoveredText().replace(",", ";");
+                String label = dep.getDependencyType();
+                edgesFile.write(String.format("%s,%s,Directed,%d,%s,1.0\n", src, dst, ++id, label));
+                nodes.add(src);
+                nodes.add(dst);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
 
         // Nodes file
-        System.out.println("\n\nId,Label");
-        for (String node : nodes) {
-            System.out.printf("%s,%s\n", node, node);
+        try (Writer nodesFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDir + "/" + NODES), "utf-8"))) {
+            nodesFile.write("Id,Label\n");
+            for (String node : nodes) {
+                nodesFile.write(String.format("%s,%s\n", node, node));
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 

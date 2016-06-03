@@ -54,7 +54,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     boolean lookupMWE;
     int processEach;
     boolean useNgramSelfFeatures;
-    HashSet<String> mweVocabulary;
 
 	@Override
 	public void setup(Context context) {
@@ -216,7 +215,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
     private String findNgram(List<NGram> ngrams, int beginSpan, int endSpan){
         for (NGram ngram : ngrams){
-            if (ngram.getBegin() >= beginSpan && ngram.getEnd() >= endSpan) return ngram.getCoveredText();
+            if (ngram.getBegin() <= beginSpan && ngram.getEnd() >= endSpan) return ngram.getCoveredText();
         }
         return "";
     }
@@ -253,14 +252,13 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
             // Generate features for multiword expressions
             String governorNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
-            String dependantNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
-//            if (!governorNgram.equals("") && governorNgram.equals(dependantNgram) && !useNgramSelfFeatures) {
-//                //
-//            } else {
+            String dependantNgram = findNgram(ngrams, dependent.getBegin(), dependent.getEnd());
+            if (!governorNgram.equals("") && governorNgram.equals(dependantNgram) && !useNgramSelfFeatures) {
+                // do not generate self-reference features
+            } else {
                 if (!governorNgram.equals("")) context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
-                if (!dependantNgram.equals(""))
-                    context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
-            //}
+                if (!dependantNgram.equals("")) context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
+            }
 
             context.progress();
         }
