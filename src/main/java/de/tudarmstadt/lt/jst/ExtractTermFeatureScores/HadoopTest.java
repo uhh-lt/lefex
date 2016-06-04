@@ -1,12 +1,12 @@
 package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
-import org.apache.avro.generic.GenericData;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,20 +18,10 @@ import static org.junit.Assert.*;
 
 
 public class HadoopTest {
-
     public void runDependencyHoling(boolean selfFeatures, boolean mwe, int expectedLengthWF,
         HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs) throws Exception
     {
-        // Initialization
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
-        String outputDir = inputPath + "-out";
-        FileUtils.deleteDirectory(new File(outputDir));
-        System.out.println("Input text: " + inputPath);
-        System.out.println("Output directory: "+  outputDir);
-
-        // Action
+        TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -43,10 +33,9 @@ public class HadoopTest {
         conf.setStrings("holing.mwe.vocabulary", mwePath);
         conf.setBoolean("holing.mwe.self_features", selfFeatures);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        // Parse the output and check the output data
-        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
         assertTrue("Number of lines in WF file is wrong.", lines.size() == expectedLengthWF);
 
@@ -62,7 +51,6 @@ public class HadoopTest {
                 fail("Unexpected feature in the WF file: " + word + "#" + feature);
             }
         }
-
         assertEquals("Some expected features are missing in the WF file.", 0, expectedWFPairs.size());
 
     }
@@ -116,7 +104,6 @@ public class HadoopTest {
 
     @Test
     public void testTrigramHolingPRJ() throws Exception {
-        // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("data/python-ruby-jaguar.txt").getFile());
         String inputPath = file.getAbsolutePath();
@@ -125,8 +112,6 @@ public class HadoopTest {
         System.out.println("Input text: " + inputPath);
         System.out.println("Output directory: "+  outputDir);
 
-
-        // Action
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -138,15 +123,7 @@ public class HadoopTest {
 
     @Test
     public void testTrigramWithCoocsBig() throws Exception {
-        // Initialization
-        ClassLoader classLoader = getClass().getClassLoader();
-        String inputPath = "/Users/sasha/Desktop/debug/h1";
-        String outputDir = inputPath + "-out";
-        FileUtils.deleteDirectory(new File(outputDir));
-        System.out.println("Input text: " + inputPath);
-        System.out.println("Output directory: "+  outputDir);
-
-        // Action
+        TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", true);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -154,20 +131,17 @@ public class HadoopTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 1);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
     }
 
     @Test
     public void testTrigramWithCoocsBigEachTenth() throws Exception {
-        // Initialization
-        ClassLoader classLoader = getClass().getClassLoader();
-        String inputPath = "/Users/sasha/Desktop/debug/h1";
+        String inputPath = getTestCorpusPath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));
         System.out.println("Input text: " + inputPath);
         System.out.println("Output directory: "+  outputDir);
 
-        // Action
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", true);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -178,58 +152,27 @@ public class HadoopTest {
         ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
     }
 
-    @Test
-    public void testTrigramWithCoocs() throws Exception {
-        // Initialization
+    private String getTestCorpusPath() {
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
-        String outputDir = inputPath + "-out";
-        FileUtils.deleteDirectory(new File(outputDir));
-        System.out.println("Input text: " + inputPath);
-        System.out.println("Output directory: "+  outputDir);
+        return file.getAbsolutePath();
+    }
 
-        // Action
+    @Test
+    public void testTrigramWithCoocs() throws Exception {
+        TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", true);
         conf.setInt("holing.sentences.maxlength", 100);
         conf.setStrings("holing.type", "trigram");
         conf.setBoolean("holing.nouns_only", false);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
-
-        // Parse the output and check the output data
-        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
-
-        // Check existance of the co-occurrence files
-
-        // Check that the co-occurrence file contains a hidden co-occurrence pair
-
-//        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-//        assertTrue("Number of lines is wrong.", lines.size() == 404);
-//
-//        Set<String> expectedFeatures = new HashSet<>(Arrays.asList("place_@_#","#_@_yet", "sum_@_a", "give_@_of"));
-//        for(String line : lines) {
-//            String[] fields = line.split("\t");
-//            String feature = fields.length == 3 ? fields[1] : "";
-//            if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
-//        }
-//
-//        assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
     }
 
     @Test
     public void testTrigram() throws Exception {
-        // Initialization
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
-        String outputDir = inputPath + "-out";
-        FileUtils.deleteDirectory(new File(outputDir));
-        System.out.println("Input text: " + inputPath);
-        System.out.println("Output directory: "+  outputDir);
-
-        // Action
+        TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -238,12 +181,11 @@ public class HadoopTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        // Parse the output and check the output data
-        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 404);
+        assertTrue("Number of lines is wrong.", lines.size() == 412);
 
         Set<String> expectedFeatures = new HashSet<>(Arrays.asList("place_@_#","#_@_yet", "sum_@_a", "give_@_of"));
         for(String line : lines) {
@@ -251,22 +193,12 @@ public class HadoopTest {
             String feature = fields.length == 3 ? fields[1] : "";
             if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
         }
-
         assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
     }
 
     @Test
-    public void tesTrigramNoLemmatization() throws Exception {
-        // Initialization
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
-        String outputDir = inputPath + "-out";
-        FileUtils.deleteDirectory(new File(outputDir));
-        System.out.println("Input text: " + inputPath);
-        System.out.println("Output directory: "+  outputDir);
-
-        // Action
+    public void testTrigramNoLemmatization() throws Exception {
+        TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -276,12 +208,11 @@ public class HadoopTest {
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
         conf.setBoolean("holing.lemmatize", false);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        // Parse the output and check the output data
-        String WFPath = (new File(outputDir, "WF-r-00000")).getAbsolutePath();
+        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 404);
+        assertTrue("Number of lines is wrong.", lines.size() == 412);
 
         Set<String> expectedFeatures = new HashSet<>(Arrays.asList("was_@_very","#_@_yet", "sum_@_a", "gave_@_of", "other_@_products"));
         for(String line : lines) {
@@ -289,7 +220,28 @@ public class HadoopTest {
             String feature = fields.length == 3 ? fields[1] : "";
             if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
         }
-
         assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
+    }
+
+    private class TestPaths {
+        private String inputPath;
+        private String outputDir;
+
+        public String getInputPath() {
+            return inputPath;
+        }
+
+        public String getOutputDir() {
+            return outputDir;
+        }
+
+        public TestPaths invoke() throws IOException {
+            inputPath = getTestCorpusPath();
+            outputDir = inputPath + "-out";
+            FileUtils.deleteDirectory(new File(outputDir));
+            System.out.println("Input text: " + inputPath);
+            System.out.println("Output directory: "+  outputDir);
+            return this;
+        }
     }
 }
