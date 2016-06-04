@@ -26,7 +26,7 @@ public class Format {
         }
     }
 
-    public static void printDependenciesGephiCSV(Collection<Dependency> deps, String outputDir) {
+    public static void saveDependenciesGephiCSV(Collection<Dependency> deps, String outputDir) {
         ensureDir(outputDir);
 
         // Edges file
@@ -35,8 +35,8 @@ public class Format {
             edgesFile.write("Source,Target,Type,Id,Label,Weight\n");
             int id = 0;
             for (Dependency dep : deps) {
-                String src = dep.getGovernor().getCoveredText().replace(",", ";");
-                String dst = dep.getDependent().getCoveredText().replace(",", ";");
+                String src = dep.getGovernor().getCoveredText().replace(",", ";") + "-" + dep.getGovernor().getBegin();
+                String dst = dep.getDependent().getCoveredText().replace(",", ";") + "-" + dep.getDependent().getBegin();
                 String label = dep.getDependencyType();
                 edgesFile.write(String.format("%s,%s,Directed,%d,%s,1.0\n", src, dst, ++id, label));
                 nodes.add(src);
@@ -49,6 +49,7 @@ public class Format {
         // Nodes file
         try (Writer nodesFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDir + "/" + NODES), "utf-8"))) {
             nodesFile.write("Id,Label\n");
+            int i = 1;
             for (String node : nodes) {
                 nodesFile.write(String.format("%s,%s\n", node, node));
             }

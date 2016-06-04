@@ -95,7 +95,7 @@ public class HadoopTest {
 
         HashMap<String, List<String>> unexpectedWF = new HashMap<>();
         unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
-        unexpectedWF.put("very", new LinkedList<String>(Arrays.asList("nn(@,the)")));
+        unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
         unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)","subj(@,grow)")));
         unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(@,park)","nn(Knoll,@)","prep_along(proceed,@)","prep_on(continue,@)")));
 
