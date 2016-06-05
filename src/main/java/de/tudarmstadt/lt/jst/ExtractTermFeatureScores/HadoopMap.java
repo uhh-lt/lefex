@@ -3,16 +3,16 @@ package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import de.tudarmstadt.lt.jst.Const;
 import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.NGram;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
+import edu.stanford.nlp.util.Pair;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -24,6 +24,7 @@ import org.apache.uima.cas.CASException;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.CasCreationUtils;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -43,6 +44,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	AnalysisEngine lemmatizer;
 	AnalysisEngine depParser;
     AnalysisEngine dictTagger;
+    AnalysisEngine nerEngine;
 
     JCas jCas;
     boolean semantifyDependencies;
@@ -51,9 +53,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	int maxSentenceLength;
     boolean nounNounDependenciesOnly;
     boolean lemmatize;
-    boolean lookupMWE;
+    boolean mweByDicionary;
     int processEach;
     boolean useNgramSelfFeatures;
+    boolean mweByNER;
 
 	@Override
 	public void setup(Context context) {
@@ -62,7 +65,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         String mwePath = context.getConfiguration().getStrings("holing.mwe.vocabulary", "")[0];
         log.info("MWE vocabulary: " + mwePath);
-        lookupMWE = !mwePath.equals("");
+        mweByDicionary = !mwePath.equals("");
 
         useNgramSelfFeatures = context.getConfiguration().getBoolean("holing.mwe.self_features", false);
         log.info("Use Ngram self features: " + useNgramSelfFeatures);
@@ -85,6 +88,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         nounNounDependenciesOnly = context.getConfiguration().getBoolean("holing.dependencies.noun_noun_dependencies_only", false);
         log.info("Noun-noun dependencies only: " + nounNounDependenciesOnly);
 
+        mweByNER = context.getConfiguration().getBoolean("holing.mwe.ner", false);;
+        log.info("Recognize named entities: " + mweByNER);
+
         try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
 			if (lemmatize) {
@@ -94,11 +100,14 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 			if (holingType.equals("dependency")) synchronized(MaltParser.class) {
 				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
-            if(lookupMWE){
+            if(mweByDicionary){
                 dictTagger = AnalysisEngineFactory.createEngine(DictionaryAnnotator.class,
-                    DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NGram.class,
+                    DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
                     DictionaryAnnotator.PARAM_MODEL_LOCATION, mwePath,
                     DictionaryAnnotator.PARAM_EXTENDED_MATCH, "true");
+            }
+            if(mweByNER){
+                nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class);
             }
 
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
@@ -108,6 +117,19 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 			log.error("Couldn't create new CAS", e);
 		}
 	}
+
+    private List<NamedEntity> filterNgrams(List<NamedEntity> ngrams){
+        List<NamedEntity> ngramsFiltered = new LinkedList<>();
+        HashSet<Pair<Integer,Integer>> coveredRanges = new HashSet<>();
+        for (NamedEntity ngram : ngrams) {
+            Pair<Integer,Integer> ngramSpan = new Pair<Integer,Integer>(ngram.getBegin(),ngram.getEnd());
+            if (!ngram.getCoveredText().contains(" ") || coveredRanges.contains(ngramSpan)) continue;
+
+            coveredRanges.add(ngramSpan);
+            ngramsFiltered.add(ngram);
+        }
+        return ngramsFiltered;
+    }
 
 	@Override
 	public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -124,7 +146,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 posTagger.process(jCas);
                 lemmatizer.process(jCas);
             }
-            if (lookupMWE) dictTagger.process(jCas);
+            if (mweByDicionary) dictTagger.process(jCas);
+            if (mweByNER) nerEngine.process(jCas);
             if (holingType.equals("dependency")) depParser.process(jCas);
 
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
@@ -149,11 +172,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     context.write(new Text("W\t" + word), ONE);
                 }
 
-                List<NGram> ngrams = JCasUtil.selectCovered(jCas, NGram.class, sentence.getBegin(), sentence.getEnd());
-                for (NGram mwe : ngrams) {
-                    if (computeCoocs) words.add(mwe.getCoveredText());
-                    context.write(new Text("W\t" + mwe.getCoveredText()), ONE);
-                    //System.out.println(">>>>>>>>>> " + mwe.getCoveredText());
+                List<NamedEntity> ngrams = filterNgrams(JCasUtil.selectCovered(jCas, NamedEntity.class, sentence.getBegin(), sentence.getEnd()));
+                for (NamedEntity ngram : ngrams) {
+                    if (computeCoocs) words.add(ngram.getCoveredText());
+                    context.write(new Text("W\t" + ngram.getCoveredText()), ONE);
                 }
 
                 if (computeCoocs) {
@@ -169,7 +191,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 if (holingType.equals("dependency")) {
                     dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
                 } else if(holingType.equals("trigram")) {
-                    trigramHoling(context, tokens);
+                    trigramHoling(context, tokens, ngrams);
                 } else {
                     dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
                 }
@@ -180,7 +202,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-    private void trigramHoling(Context context, Collection<Token> tokens) throws AnalysisEngineProcessException, IOException, InterruptedException {
+
+    private void trigramHoling(Context context, Collection<Token> tokens, List<NamedEntity> ngrams)
+            throws AnalysisEngineProcessException, IOException, InterruptedException
+    {
         try {
             String center = Const.BEGEND_CHAR;
             String left = Const.BEGEND_CHAR;
@@ -213,14 +238,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-    private String findNgram(List<NGram> ngrams, int beginSpan, int endSpan){
-        for (NGram ngram : ngrams){
-            if (ngram.getBegin() <= beginSpan && ngram.getEnd() >= endSpan) return ngram.getCoveredText();
-        }
-        return "";
-    }
-
-    private void dependencyHoling(Context context, Collection<Token> tokens, List<NGram> ngrams, int beginSentence, int endSentence)
+    private void dependencyHoling(Context context, Collection<Token> tokens, List<NamedEntity> ngrams, int beginSentence, int endSentence)
             throws AnalysisEngineProcessException, IOException, InterruptedException
     {
         Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, beginSentence, endSentence);
@@ -263,4 +281,12 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             context.progress();
         }
     }
+
+    private String findNgram(List<NamedEntity> ngrams, int beginSpan, int endSpan){
+        for (Annotation ngram : ngrams){
+            if (ngram.getBegin() <= beginSpan && ngram.getEnd() >= endSpan) return ngram.getCoveredText();
+        }
+        return "";
+    }
+
 }

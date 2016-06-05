@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 
 
 public class HadoopTest {
-    public void runDependencyHoling(boolean selfFeatures, boolean mwe, int expectedLengthWF,
+    public void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
         HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs) throws Exception
     {
         TestPaths paths = new TestPaths().invoke();
@@ -32,6 +32,7 @@ public class HadoopTest {
         String mwePath = mwe ? Resources.getJarResourcePath("data/voc-sample.csv") : "";
         conf.setStrings("holing.mwe.vocabulary", mwePath);
         conf.setBoolean("holing.mwe.self_features", selfFeatures);
+        conf.setBoolean("holing.mwe.ner", ner);
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
@@ -56,6 +57,22 @@ public class HadoopTest {
     }
 
     @Test
+    public void testDependencyHolingMweSelfFeaturesNER() throws Exception {
+        HashMap<String, List<String>> expectedWF = new HashMap<>();
+        expectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)","subj(@,grow)")));
+        expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
+        expectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(@,park)","nn(Knoll,@)","prep_along(proceed,@)","prep_on(continue,@)")));
+        expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
+
+        HashMap<String, List<String>> unexpectedWF = new HashMap<>();
+        unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
+        unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
+
+        runDependencyHoling(true, true, true, 761, expectedWF, unexpectedWF);
+    }
+
+
+    @Test
     public void testDependencyHolingMweSelfFeatures() throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
         expectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)","subj(@,grow)")));
@@ -67,7 +84,7 @@ public class HadoopTest {
         unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
         unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
 
-        runDependencyHoling(true, true, 752, expectedWF, unexpectedWF);
+        runDependencyHoling(true, true, false, 752, expectedWF, unexpectedWF);
     }
 
     @Test
@@ -84,11 +101,11 @@ public class HadoopTest {
         unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(Knoll,@)")));
         unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)")));
 
-        runDependencyHoling(false, true, 741, expectedWF, unexpectedWF);
+        runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF);
     }
 
     @Test
-    public void testDependencyHoling() throws Exception {
+    public void testDependencyHolingNoMWE() throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
         expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
         expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
@@ -99,7 +116,7 @@ public class HadoopTest {
         unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)","subj(@,grow)")));
         unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(@,park)","nn(Knoll,@)","prep_along(proceed,@)","prep_on(continue,@)")));
 
-        runDependencyHoling(false, false, 726, expectedWF, unexpectedWF);
+        runDependencyHoling(false, false, false, 726, expectedWF, unexpectedWF);
     }
 
     @Test
