@@ -4,11 +4,13 @@ import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTyp
 
 import java.io.IOException;
 import java.util.*;
+import java.util.jar.Attributes;
 
 import de.tudarmstadt.lt.jst.Const;
 import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.NGram;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
@@ -202,7 +204,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-
     private void trigramHoling(Context context, Collection<Token> tokens, List<NamedEntity> ngrams)
             throws AnalysisEngineProcessException, IOException, InterruptedException
     {
@@ -212,7 +213,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             String right = Const.BEGEND_CHAR;
 
             for (Token rightToken : tokens) {
-                if (lemmatize) right = rightToken.getLemma().getValue();
+
+                if (lemmatize && rightToken.getLemma() != null) right = rightToken.getLemma().getValue();
                 else right = rightToken.getCoveredText();
                 if (right == null) continue;
 

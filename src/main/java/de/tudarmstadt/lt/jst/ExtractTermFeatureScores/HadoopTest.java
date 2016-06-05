@@ -120,7 +120,16 @@ public class HadoopTest {
     }
 
     @Test
-    public void testTrigramHolingPRJ() throws Exception {
+    public void testTrigramHolingLemmaPRJ() throws Exception {
+        runTrigram(true);
+    }
+
+    @Test
+    public void testTrigramHolingNoLemmaPRJ() throws Exception {
+        runTrigram(false);
+    }
+
+    private void runTrigram(boolean lemmatize) throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("data/python-ruby-jaguar.txt").getFile());
         String inputPath = file.getAbsolutePath();
@@ -135,6 +144,7 @@ public class HadoopTest {
         conf.setStrings("holing.type", "trigram");
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 1);
+        conf.setBoolean("holing.lemmatize", lemmatize);
         ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
     }
 
