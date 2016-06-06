@@ -2,16 +2,18 @@ package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.jar.Attributes;
 
 import de.tudarmstadt.lt.jst.Const;
 import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.NGram;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import edu.stanford.nlp.util.Pair;
@@ -34,7 +36,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
-//import de.tudarmstadt.ukp.dkpro.core.dictionaryannotator.DictionaryAnnotator;
 import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
@@ -61,16 +62,26 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     boolean mweByNER;
 
 	@Override
-	public void setup(Context context) {
+	public void setup(Context context) throws IOException {
         processEach = context.getConfiguration().getInt("holing.process_each", 1);
         log.info("Process each: " + processEach);
 
         String mwePath = context.getConfiguration().getStrings("holing.mwe.vocabulary", "")[0];
         log.info("MWE vocabulary: " + mwePath);
+        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) {
+            File f = new File("./mwe_voc");
+            System.out.println(">>>>>>>>>>>>>>>>>>>\n"+  f.getAbsoluteFile());
+            System.out.println(f.exists());
+            List<String> l = Files.readAllLines(Paths.get(f.getAbsolutePath()), Charset.defaultCharset());
+            System.out.println(l.get(0) + l.get(1));
+        }
         mweByDicionary = !mwePath.equals("");
 
         useNgramSelfFeatures = context.getConfiguration().getBoolean("holing.mwe.self_features", false);
         log.info("Use Ngram self features: " + useNgramSelfFeatures);
+
+        mweByNER = context.getConfiguration().getBoolean("holing.mwe.ner", false);;
+        log.info("Recognize named entities: " + mweByNER);
 
         computeCoocs = context.getConfiguration().getBoolean("holing.coocs", false);
         log.info("Computing coocs: " + computeCoocs);
@@ -89,9 +100,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         nounNounDependenciesOnly = context.getConfiguration().getBoolean("holing.dependencies.noun_noun_dependencies_only", false);
         log.info("Noun-noun dependencies only: " + nounNounDependenciesOnly);
-
-        mweByNER = context.getConfiguration().getBoolean("holing.mwe.ner", false);;
-        log.info("Recognize named entities: " + mweByNER);
 
         try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);

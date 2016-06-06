@@ -1,7 +1,9 @@
 package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
+import java.net.URI;
 import java.util.Arrays;
 import de.tudarmstadt.lt.jst.Utils.MultiOutputIntSumReducer;
+import org.apache.avro.io.parsing.Symbol;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -17,6 +19,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.yarn.util.SystemClock;
 
 
 public class HadoopMain extends Configured implements Tool {
@@ -50,7 +53,12 @@ public class HadoopMain extends Configured implements Tool {
 		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "WF", TextOutputFormat.class, Text.class, IntWritable.class);
-		
+
+        String mwePath = conf.getStrings("holing.mwe.vocabulary", "")[0];
+		job.addCacheFile(new URI(mwePath + "#mwe_voc"));
+        //System.out.println("========================");
+        //System.out.println(mwePath);
+
 		job.setJobName("JoSimText - Feature Extraction");
 		return job.waitForCompletion(true);
 	}
