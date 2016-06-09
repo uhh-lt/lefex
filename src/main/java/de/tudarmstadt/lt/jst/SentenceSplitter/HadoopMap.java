@@ -1,4 +1,4 @@
-package de.tudarmstadt.lt.jst.FixLineLength;
+package de.tudarmstadt.lt.jst.SentenceSplitter;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -24,24 +24,18 @@ class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
 	AnalysisEngine segmenter;
 	JCas jCas;
-    boolean tokenize;
     int maxSentenceSize = 150;  // tokens
 
 	@Override
 	public void setup(Context context) {
-        tokenize = context.getConfiguration().getBoolean("tokenize", true);
         maxSentenceSize = context.getConfiguration().getInt("max_sentences_size", 150);
-
-        log.info("Tokenize: " + tokenize);
-        if (tokenize) {
-            try {
-                segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
-                jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
-            } catch (ResourceInitializationException e) {
-                log.error("Couldn't initialize analysis engine", e);
-            } catch (CASException e) {
-                log.error("Couldn't create new CAS", e);
-            }
+        try {
+            segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
+            jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
+        } catch (ResourceInitializationException e) {
+            log.error("Couldn't initialize analysis engine", e);
+        } catch (CASException e) {
+            log.error("Couldn't create new CAS", e);
         }
 	}
 
@@ -51,22 +45,19 @@ class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
 		try {
             String text = value.toString();
             context.getCounter("de.tudarmstadt.lt", "TOTAL_LINES").increment(1);
-            if(tokenize) {
-                jCas.reset();
-                jCas.setDocumentText(text);
-                jCas.setDocumentLanguage("en");
-                segmenter.process(jCas);
+            jCas.reset();
+            jCas.setDocumentText(text);
+            jCas.setDocumentLanguage("en");
+            segmenter.process(jCas);
 
-                for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
-                    Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
-                    context.getCounter("de.tudarmstadt.lt", "TOTAL_SENTENCES").increment(1);
-                    if(tokens.size() <= maxSentenceSize) {
-                        context.write(key, new Text(text.substring(sentence.getBegin(), sentence.getEnd())));
-                        context.getCounter("de.tudarmstadt.lt", "SENTENCES_WRITTEN").increment(1);
-                    } else {
-                        context.getCounter("de.tudarmstadt.lt", "SENTENCES_SKIPPED").increment(1);
-                    }
-
+            for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
+                context.getCounter("de.tudarmstadt.lt", "TOTAL_SENTENCES").increment(1);
+                if(tokens.size() <= maxSentenceSize) {
+                    context.write(key, new Text(text.substring(sentence.getBegin(), sentence.getEnd())));
+                    context.getCounter("de.tudarmstadt.lt", "SENTENCES_WRITTEN").increment(1);
+                } else {
+                    context.getCounter("de.tudarmstadt.lt", "SENTENCES_SKIPPED").increment(1);
                 }
             }
 
