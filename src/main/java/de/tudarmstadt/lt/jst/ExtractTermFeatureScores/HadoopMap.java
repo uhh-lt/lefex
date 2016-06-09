@@ -66,15 +66,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         processEach = context.getConfiguration().getInt("holing.process_each", 1);
         log.info("Process each: " + processEach);
 
-        String mwePath = context.getConfiguration().getStrings("holing.mwe.vocabulary", "")[0];
+        String mwePath = "";
+        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) mwePath = new File("./mwe_voc").getAbsolutePath();
         log.info("MWE vocabulary: " + mwePath);
-        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) {
-            File f = new File("./mwe_voc");
-            System.out.println(">>>>>>>>>>>>>>>>>>>\n"+  f.getAbsoluteFile());
-            System.out.println(f.exists());
-            List<String> l = Files.readAllLines(Paths.get(f.getAbsolutePath()), Charset.defaultCharset());
-            System.out.println(l.get(0) + l.get(1));
-        }
         mweByDicionary = !mwePath.equals("");
 
         useNgramSelfFeatures = context.getConfiguration().getBoolean("holing.mwe.self_features", false);
