@@ -1,21 +1,17 @@
 package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
-
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-
 import de.tudarmstadt.lt.jst.Const;
 import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import de.tudarmstadt.ukp.dkpro.core.matetools.MateParser;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 import edu.stanford.nlp.util.Pair;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -60,6 +56,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     int processEach;
     boolean useNgramSelfFeatures;
     boolean mweByNER;
+    String depParserType;
 
 	@Override
 	public void setup(Context context) throws IOException {
@@ -95,6 +92,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         nounNounDependenciesOnly = context.getConfiguration().getBoolean("holing.dependencies.noun_noun_dependencies_only", false);
         log.info("Noun-noun dependencies only: " + nounNounDependenciesOnly);
 
+        depParserType = context.getConfiguration().getStrings("holing.dependencies.parser", "malt")[0];
+        log.info("Dependency parser: " + depParserType);
+
         try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
 			if (lemmatize) {
@@ -102,7 +102,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
             }
 			if (holingType.equals("dependency")) synchronized(MaltParser.class) {
-				depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
+                if (depParserType.equals("malt")) depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
+                else if (depParserType.equals("mate")) depParser = AnalysisEngineFactory.createEngine(MateParser.class);
+                else if (depParserType.equals("stanford")) depParser = AnalysisEngineFactory.createEngine(StanfordParser.class);
+                else depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
             if(mweByDicionary){
                 dictTagger = AnalysisEngineFactory.createEngine(DictionaryAnnotator.class,

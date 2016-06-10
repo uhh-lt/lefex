@@ -56,8 +56,6 @@ public class HadoopMain extends Configured implements Tool {
 
         String mwePath = conf.getStrings("holing.mwe.vocabulary", "")[0];
 		job.addCacheFile(new URI(mwePath + "#mwe_voc"));
-        //System.out.println("========================");
-        //System.out.println(mwePath);
 
 		job.setJobName("JoSimText - Feature Extraction");
 		return job.waitForCompletion(true);
