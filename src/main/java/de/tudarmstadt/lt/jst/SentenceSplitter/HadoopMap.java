@@ -54,7 +54,8 @@ class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
                 context.getCounter("de.tudarmstadt.lt", "TOTAL_SENTENCES").increment(1);
                 if(tokens.size() <= maxSentenceSize) {
-                    context.write(key, new Text(text.substring(sentence.getBegin(), sentence.getEnd())));
+                    String sentenceStr = text.substring(sentence.getBegin(), sentence.getEnd()).replaceAll("\\s+", " ");
+                    context.write(new LongWritable(sentenceStr.hashCode()), new Text(sentenceStr));
                     context.getCounter("de.tudarmstadt.lt", "SENTENCES_WRITTEN").increment(1);
                 } else {
                     context.getCounter("de.tudarmstadt.lt", "SENTENCES_SKIPPED").increment(1);

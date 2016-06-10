@@ -6,11 +6,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -37,15 +39,19 @@ public class HadoopMain extends Configured implements Tool {
 		job.setMapperClass(HadoopMap.class);
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(Text.class);
-		if (makeUnique) job.setReducerClass(HadoopReduce.class);
-        else job.setReducerClass(NothingReducer.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(LongWritable.class);
+		if (makeUnique)
+            job.setReducerClass(HadoopReduce.class);
+        else
+            job.setReducerClass(NothingReducer.class);
 		job.setJobName("JoSimText -- Fix Line Length");
 		return job.waitForCompletion(true);
 	}
 
 	public int run(String[] args) throws Exception {
 		System.out.println("args:" + Arrays.asList(args));
-		if (args.length != 2) {
+		if (args.length != 3) {
 			System.out.println("Outputs one sentence per line and drops too long sentences" +
 					" (e.g. as they an cause parsing errors).");
 			System.out.println("Usage: <input-corpus> <output-corpus> <unique-sentences>");
