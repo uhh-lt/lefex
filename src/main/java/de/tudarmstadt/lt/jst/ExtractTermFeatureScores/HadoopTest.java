@@ -16,10 +16,10 @@ import de.tudarmstadt.lt.jst.Utils.Resources;
 
 import static org.junit.Assert.*;
 
-
 public class HadoopTest {
     public void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
-        HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs) throws Exception
+        HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs, String depParser)
+            throws Exception
     {
         TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
@@ -33,6 +33,7 @@ public class HadoopTest {
         conf.setStrings("holing.mwe.vocabulary", mwePath);
         conf.setBoolean("holing.mwe.self_features", selfFeatures);
         conf.setBoolean("holing.mwe.ner", ner);
+        conf.setStrings("holing.dependencies.parser", depParser);
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
@@ -68,9 +69,8 @@ public class HadoopTest {
         unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
         unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
 
-        runDependencyHoling(true, true, true, 761, expectedWF, unexpectedWF);
+        runDependencyHoling(true, true, true, 761, expectedWF, unexpectedWF, "malt");
     }
-
 
     @Test
     public void testDependencyHolingMweSelfFeatures() throws Exception {
@@ -84,11 +84,11 @@ public class HadoopTest {
         unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
         unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
 
-        runDependencyHoling(true, true, false, 752, expectedWF, unexpectedWF);
+        runDependencyHoling(true, true, false, 752, expectedWF, unexpectedWF, "malt");
     }
 
     @Test
-    public void testDependencyHolingMweNoSelfFeatures() throws Exception {
+    public void testDependencyHolingMweNoSelfFeaturesMalt() throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
         expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
         expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
@@ -101,7 +101,25 @@ public class HadoopTest {
         unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(Knoll,@)")));
         unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)")));
 
-        runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF);
+        runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt");
+    }
+
+
+    @Test
+    public void testDependencyHolingMweNoSelfFeaturesStanford() throws Exception {
+        HashMap<String, List<String>> expectedWF = new HashMap<>();
+        expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
+        expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
+        expectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,park)","prep_along(proceed,@)","prep_on(continue,@)")));
+        expectedWF.put("Green pears", new LinkedList<>(Arrays.asList("subj(@,grow)")));
+
+        HashMap<String, List<String>> unexpectedWF = new HashMap<>();
+        unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
+        unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
+        unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(Knoll,@)")));
+        unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)")));
+
+        runDependencyHoling(false, true, false, 619, expectedWF, unexpectedWF, "stanford");
     }
 
     @Test
@@ -116,7 +134,7 @@ public class HadoopTest {
         unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)","subj(@,grow)")));
         unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(@,park)","nn(Knoll,@)","prep_along(proceed,@)","prep_on(continue,@)")));
 
-        runDependencyHoling(false, false, false, 726, expectedWF, unexpectedWF);
+        runDependencyHoling(false, false, false, 726, expectedWF, unexpectedWF, "malt");
     }
 
     @Test
