@@ -45,7 +45,7 @@ public class HadoopMain extends Configured implements Tool {
             job.setReducerClass(HadoopReduce.class);
         else
             job.setReducerClass(NothingReducer.class);
-		job.setJobName("JoSimText -- Fix Line Length");
+		job.setJobName("JoSimText - Fix Line Length");
 		return job.waitForCompletion(true);
 	}
 
