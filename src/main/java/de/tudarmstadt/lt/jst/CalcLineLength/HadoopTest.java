@@ -35,7 +35,7 @@ public class HadoopTest {
         // Parse the output and check the output data
         String outputPath = (new File(outputDir, "part-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(outputPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 10);
+        assertTrue("Number of lines is wrong.", lines.size() == 12);
     }
 
     @Test
@@ -57,6 +57,6 @@ public class HadoopTest {
         // Parse the output and check the output data
         String outputPath = (new File(outputDir, "part-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(outputPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 10);
+        assertTrue("Number of lines is wrong.", lines.size() == 12);
     }
 }

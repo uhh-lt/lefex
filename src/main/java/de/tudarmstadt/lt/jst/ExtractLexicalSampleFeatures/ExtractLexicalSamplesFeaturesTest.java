@@ -88,22 +88,22 @@ public class ExtractLexicalSamplesFeaturesTest {
         run(inputPath, conf);
     }
 
-    // /Users/alex/work/joint/eval/contextualization-eval/data is https://github.com/tudarmstadt-lt/context-eval/tree/master/data
+// /Users/alex/work/joint/eval/contextualization-eval/data is https://github.com/tudarmstadt-lt/context-eval/tree/master/data
 
-    @Test
-    public void testOnSemEval() throws Exception {
-        String inputPath = "/Users/alex/work/joint/eval/contextualization-eval/data/Dataset-SemEval-2013-13.csv";
-        Configuration conf = new Configuration();
-        conf.setStrings("holing.type", "dependency+trigram");
-        run(inputPath, conf);
-    }
-
-    @Test
-    public void testOnTWSI() throws Exception {
-        String inputPath = "/Users/alex/work/joint/eval/contextualization-eval/data/Dataset-TWSI-2.csv";
-        Configuration conf = new Configuration();
-        conf.setStrings("holing.type", "dependency+trigram");
-        run(inputPath, conf);
-    }
+//    @Test
+//    public void testOnSemEval() throws Exception {
+//        String inputPath = "/Users/alex/work/joint/eval/contextualization-eval/data/Dataset-SemEval-2013-13.csv";
+//        Configuration conf = new Configuration();
+//        conf.setStrings("holing.type", "dependency+trigram");
+//        run(inputPath, conf);
+//    }
+//
+//    @Test
+//    public void testOnTWSI() throws Exception {
+//        String inputPath = "/Users/alex/work/joint/eval/contextualization-eval/data/Dataset-TWSI-2.csv";
+//        Configuration conf = new Configuration();
+//        conf.setStrings("holing.type", "dependency+trigram");
+//        run(inputPath, conf);
+//    }
 }
 
