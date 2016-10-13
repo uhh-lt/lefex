@@ -107,7 +107,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 else if (depParserType.equals("stanford")) depParser = AnalysisEngineFactory.createEngine(StanfordParser.class);
                 else depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
-            if(mweByDicionary){
+            if(mweByDicionary && mwePath != ""){
                 dictTagger = AnalysisEngineFactory.createEngine(DictionaryAnnotator.class,
                     DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
                     DictionaryAnnotator.PARAM_MODEL_LOCATION, mwePath,
