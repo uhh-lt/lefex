@@ -150,6 +150,7 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
         return new HolingResult(allFeatures, targetFeatures);
     }
 
+
     private HolingResult dependencyHoling(Collection<Token> tokens, String lexSampleTarget) throws AnalysisEngineProcessException, IOException, InterruptedException {
         List<String> allFeatures = new LinkedList<>();
         List<String> targetFeatures = new LinkedList<>();
@@ -161,20 +162,20 @@ public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, 
             // Get dependency
             Token source = dep.getGovernor();
             Token target = dep.getDependent();
-            String rel = dep.getDependencyType();
-            if (semantifyDependencies) rel = Format.semantifyDependencyRelation(rel);
+            String dtype = dep.getDependencyType();
+            if (semantifyDependencies) dtype = Format.semantifyDependencyType(dtype);
             String sourceLemma = source.getLemma().getValue();
             String targetLemma = target.getLemma().getValue();
-            if (sourceLemma == null || targetLemma == null) continue;
+            if (sourceLemma == null || targetLemma == null || Format.isStopDependencyType(dtype)) continue;
 
             // Save dependency features, position of hole is always as in the text
-            String bim = target.getBegin() < source.getBegin() ? rel + "(" + targetLemma + ",@)" : rel + "(@," + targetLemma + ")";  //
+            String bim = target.getBegin() < source.getBegin() ? dtype + "(" + targetLemma + ",@)" : dtype + "(@," + targetLemma + ")";  //
             allFeatures.add(bim);
             if (sourceLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())){
                 targetFeatures.add(bim);
             }
 
-            String ibim = target.getBegin() < source.getBegin() ? rel + "(@," + sourceLemma + ")" : rel + "(" + sourceLemma + ",@)";
+            String ibim = target.getBegin() < source.getBegin() ? dtype + "(@," + sourceLemma + ")" : dtype + "(" + sourceLemma + ",@)";
             allFeatures.add(ibim);
             if (targetLemma.toLowerCase().equals(lexSampleTarget.toLowerCase())){
                 targetFeatures.add(ibim);

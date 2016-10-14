@@ -57,6 +57,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     boolean useNgramSelfFeatures;
     boolean mweByNER;
     String depParserType;
+    boolean useDependencyTypeStoplist;
 
 	@Override
 	public void setup(Context context) throws IOException {
@@ -94,6 +95,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         depParserType = context.getConfiguration().getStrings("holing.dependencies.parser", "malt")[0];
         log.info("Dependency parser: " + depParserType);
+
+        useDependencyTypeStoplist = context.getConfiguration().getBoolean("holing.dependency_stoplist", true);
+        log.info("Use dependency type stoplist: " + useDependencyTypeStoplist);
+
 
         try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
@@ -254,23 +259,24 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             // Get dependency
             Token governor = dep.getGovernor();
             Token dependent = dep.getDependent();
-            String rel = dep.getDependencyType();
-            if (semantifyDependencies) rel = Format.semantifyDependencyRelation(rel);
+            String dtype = dep.getDependencyType();
+            if (semantifyDependencies) dtype = Format.semantifyDependencyType(dtype);
             String governorPos = governor.getPos().getPosValue();
             String dependentPos = dependent.getPos().getPosValue();
             String governorLemma = governor.getLemma().getValue();
             String dependentLemma = dependent.getLemma().getValue();
-            if (governorLemma == null || dependentLemma == null) continue;
+            boolean skipByDependencyType = useDependencyTypeStoplist && Format.isStopDependencyType(dtype);
+            if (governorLemma == null || dependentLemma == null || skipByDependencyType) continue;
 
             // Save the dependenc1y as a feature
             if (nounNounDependenciesOnly && (!governorPos.equals("NN") || !governorPos.equals("NNS"))) continue;
-            String bim = dependent.getBegin() < governor.getBegin() ? rel + "(" + dependentLemma + ",@)" : rel + "(@," + dependentLemma + ")";
+            String bim = dependent.getBegin() < governor.getBegin() ? dtype + "(" + dependentLemma + ",@)" : dtype + "(@," + dependentLemma + ")";
             context.write(new Text("F\t" + bim), ONE);
             context.write(new Text("WF\t" + governorLemma + "\t" + bim), ONE);
 
             // Save inverse dependency as a feature
             if (nounNounDependenciesOnly && (!dependentPos.equals("NN") && !dependentPos.equals("NNS"))) continue;
-            String ibim = dependent.getBegin() < governor.getBegin() ? rel + "(@," + governorLemma + ")" : rel + "(" + governorLemma + ",@)";
+            String ibim = dependent.getBegin() < governor.getBegin() ? dtype + "(@," + governorLemma + ")" : dtype + "(" + governorLemma + ",@)";
 
             context.write(new Text("F\t" + ibim), ONE);
             context.write(new Text("WF\t" + dependentLemma + "\t" + ibim), ONE);

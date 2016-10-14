@@ -1,10 +1,7 @@
 package de.tudarmstadt.lt.jst.Utils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import org.apache.uima.jcas.JCas;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -116,7 +113,7 @@ public class Format {
         return collapsedDeps;
     }
 
-    public static String semantifyDependencyRelation(String rel) {
+    public static String semantifyDependencyType(String rel) {
         switch (rel) {
             case "nsubj":
                 return "subj";
@@ -128,6 +125,12 @@ public class Format {
                 return "obj";
         }
         return rel;
+    }
+
+    private static HashSet<String> _stopDependencies = new HashSet<>(Arrays.asList("root"));
+
+    public static boolean isStopDependencyType(String dtype){
+        return _stopDependencies.contains(dtype.toLowerCase());
     }
 
     public static String join(List<String> list, String sep) {

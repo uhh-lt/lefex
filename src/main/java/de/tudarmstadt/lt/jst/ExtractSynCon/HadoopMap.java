@@ -86,7 +86,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     String source = dep.getGovernor().getLemma().getValue() + dep.getGovernor().getBegin();
                     String target = dep.getDependent().getLemma().getValue() + dep.getDependent().getBegin();
                     String type = dep.getDependencyType();
-                    if (collapseDependencies) type = Format.semantifyDependencyRelation(type);
+                    if (collapseDependencies) type = Format.semantifyDependencyType(type);
                     String dirDependency = "";
                     String invDependency = "";
                     dirDependency = type + ":@:" + dep.getDependent().getLemma().getValue();  // new simpler to parse format "type:src:dst

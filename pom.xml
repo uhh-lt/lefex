@@ -2,18 +2,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.tudarmstadt.lt</groupId>
-    <artifactId>noun-sense-induction</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>lefex</artifactId>
+    <version>0.0.2</version>
+
     <repositories>
         <repository>
             <id>Zoidberg UKP Models</id>
             <url>http://zoidberg.ukp.informatik.tu-darmstadt.de/artifactory/public-model-releases-local/</url>
             <snapshots>
                 <enabled>true</enabled>
-                <!-- <updatePolicy>always</updatePolicy> -->
             </snapshots>
         </repository>
     </repositories>
+
     <dependencies>
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
@@ -39,6 +40,7 @@
             <artifactId>hadoop-client</artifactId>
             <version>2.7.3</version>
         </dependency>
+
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
@@ -46,6 +48,7 @@
             </artifactId>
             <version>1.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
@@ -53,6 +56,7 @@
             </artifactId>
             <version>1.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
@@ -60,6 +64,7 @@
             </artifactId>
             <version>1.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
@@ -67,6 +72,7 @@
             </artifactId>
             <version>1.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
@@ -74,6 +80,7 @@
             </artifactId>
             <version>1.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
@@ -82,9 +89,9 @@
             <version>20120312</version>
         </dependency>
     </dependencies>
+
     <build>
         <plugins>
-
             <!-- To be able to debug tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -95,7 +102,6 @@
                 </configuration>
             </plugin>
 
-
             <plugin>
                 <version>3.5.1</version>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -105,6 +111,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>

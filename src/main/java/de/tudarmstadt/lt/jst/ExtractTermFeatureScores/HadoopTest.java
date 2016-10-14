@@ -57,9 +57,6 @@ public class HadoopTest {
 
     }
 
-
-
-
     @Test
     public void testDependencyHolingMweSelfFeaturesNER() throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
@@ -72,7 +69,7 @@ public class HadoopTest {
         unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
         unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
 
-        runDependencyHoling(true, true, true, 761, expectedWF, unexpectedWF, "malt");
+        runDependencyHoling(true, true, true, 770, expectedWF, unexpectedWF, "malt");
     }
 
     @Test
@@ -106,7 +103,6 @@ public class HadoopTest {
 
         runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt");
     }
-
 
     @Test
     public void testDependencyHolingMweNoSelfFeaturesStanford() throws Exception {
