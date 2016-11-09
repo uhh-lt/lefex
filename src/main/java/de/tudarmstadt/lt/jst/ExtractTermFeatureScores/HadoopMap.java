@@ -36,6 +36,7 @@ import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
+    static final String POS_SEP = "#";
 
     Logger log = Logger.getLogger("de.tudarmstadt.lt.jst");
 	AnalysisEngine segmenter;
@@ -58,6 +59,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     boolean mweByNER;
     String depParserType;
     boolean useDependencyTypeStoplist;
+    boolean outputPos;
 
 	@Override
 	public void setup(Context context) throws IOException {
@@ -99,6 +101,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         useDependencyTypeStoplist = context.getConfiguration().getBoolean("holing.dependency_stoplist", true);
         log.info("Use dependency type stoplist: " + useDependencyTypeStoplist);
 
+        outputPos = context.getConfiguration().getBoolean("holing.output_pos", true);
+        log.info("Output part-of-speech tags: " + outputPos);
 
         try {
 			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
@@ -172,22 +176,36 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     context.getCounter("de.tudarmstadt.lt.jst", "NUM_PROCESSED_SENTENCES").increment(1);
                 }
 
-                // W: word count
+                // W: word count -- single words
                 Set<String> words = new HashSet<>();
                 for (Token wordToken : tokens) {
                     String word;
                     if (lemmatize) word = wordToken.getLemma().getValue();
                     else word = wordToken.getCoveredText();
-
                     if (word == null) continue;
-                    if (computeCoocs) words.add(word);
+                    if (outputPos && lemmatize){
+                        word = word + POS_SEP + wordToken.getPos().getPosValue();
+                    }
                     context.write(new Text("W\t" + word), ONE);
+
+                    if (computeCoocs) words.add(word);
                 }
 
+                // W: word count -- ngrams
                 List<NamedEntity> ngrams = filterNgrams(JCasUtil.selectCovered(jCas, NamedEntity.class, sentence.getBegin(), sentence.getEnd()));
                 for (NamedEntity ngram : ngrams) {
-                    if (computeCoocs) words.add(ngram.getCoveredText());
-                    context.write(new Text("W\t" + ngram.getCoveredText()), ONE);
+                    String ngramStr = "";
+                    if (outputPos && lemmatize){
+                        Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram.getBegin(), ngram.getEnd());
+                        for (Token nt: ngramTokens){
+                            ngramStr += nt.getCoveredText() + POS_SEP + nt.getPos().getPosValue() + " ";
+                        }
+                        ngramStr = ngramStr.trim();
+                    } else {
+                        ngramStr = ngram.getCoveredText();
+                    }
+                    context.write(new Text("W\t" + ngramStr), ONE);
+                    if (computeCoocs) words.add(ngramStr);
                 }
 
                 if (computeCoocs) {
@@ -200,6 +218,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     }
                 }
 
+                // WF and F: word-feature counts and feature counts
                 if (holingType.equals("dependency")) {
                     dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
                 } else if(holingType.equals("trigram")) {

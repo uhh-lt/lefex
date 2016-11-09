@@ -21,21 +21,15 @@ import org.apache.hadoop.util.ToolRunner;
 
 
 public class HadoopMain extends Configured implements Tool {
-    public boolean runJob(String inDir, String outDir) throws Exception {
+
+	private boolean runJob(String inDir, String outDir) throws Exception {
 		Configuration conf = getConf();
-		FileSystem fs = FileSystem.get(conf);
-		String _outDir = outDir;
-		int outDirSuffix = 1;
-		while (fs.exists(new Path(_outDir))) {
-			_outDir = outDir + outDirSuffix;
-			outDirSuffix++;
-		}
 		conf.setBoolean("mapred.output.compress", false);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(HadoopMain.class);
 		FileInputFormat.addInputPath(job, new Path(inDir));
-		FileOutputFormat.setOutputPath(job, new Path(_outDir));
+		FileOutputFormat.setOutputPath(job, new Path(outDir));
 		job.setMapperClass(HadoopMap.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(IntWritable.class);
@@ -61,6 +55,7 @@ public class HadoopMain extends Configured implements Tool {
 		return job.waitForCompletion(true);
 	}
 
+	@Override
 	public int run(String[] args) throws Exception {
 		System.out.println("args:" + Arrays.asList(args));
 		if (args.length != 2) {

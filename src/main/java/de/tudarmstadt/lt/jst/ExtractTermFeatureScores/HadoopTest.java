@@ -17,9 +17,19 @@ import de.tudarmstadt.lt.jst.Utils.Resources;
 import static org.junit.Assert.*;
 
 public class HadoopTest {
-    public void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
-        HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs, String depParser)
-            throws Exception
+
+    private void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
+        HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs,
+        String depParser) throws Exception
+    {
+        runDependencyHoling(selfFeatures, mwe, ner, expectedLengthWF, expectedWFPairs, unexpectedWFPairs, depParser,
+                false, -1, new HashSet<>(), new HashSet<>());
+    }
+
+    private void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
+        HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs,
+        String depParser, boolean outputPos, int expectedLengthW,
+        HashSet<String> expectedWFreq, HashSet<String> unexpectedWFreq) throws Exception
     {
         TestPaths paths = new TestPaths().invoke();
         Configuration conf = new Configuration();
@@ -34,12 +44,13 @@ public class HadoopTest {
         conf.setBoolean("holing.mwe.self_features", selfFeatures);
         conf.setBoolean("holing.mwe.ner", ner);
         conf.setStrings("holing.dependencies.parser", depParser);
+        conf.setBoolean("holing.output_pos", outputPos);
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
         String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines in WF file is wrong.", lines.size() == expectedLengthWF);
+        assertEquals("Number of lines in WF file is wrong.", expectedLengthWF, lines.size());
 
         for(String line : lines) {
             String[] fields = line.split("\t");
@@ -55,6 +66,21 @@ public class HadoopTest {
         }
         assertEquals("Some expected features are missing in the WF file.", 0, expectedWFPairs.size());
 
+        // Chech for presntes of part-os-speech tags
+        String wPath = (new File(paths.getOutputDir(), "W-r-00000")).getAbsolutePath();
+        List<String> wLines = Files.readAllLines(Paths.get(wPath), Charset.forName("UTF-8"));
+        if (expectedLengthW != -1) {
+            assertEquals("Number of lines in W file is wrong.", expectedLengthW, wLines.size());
+        }
+
+        // Check expected and unexpected W
+        for (String ew : expectedWFreq){
+            assertTrue("Expected word is not present: " + ew, wLines.contains(ew));
+        }
+
+        for (String uw : unexpectedWFreq){
+            assertFalse("Unexpected word is present: " + uw, wLines.contains(uw));
+        }
     }
 
     @Test
@@ -87,8 +113,7 @@ public class HadoopTest {
         runDependencyHoling(true, true, false, 752, expectedWF, unexpectedWF, "malt");
     }
 
-    @Test
-    public void testDependencyHolingMweNoSelfFeaturesMalt() throws Exception {
+    private void runDependencyHolingMweNoSelfFeaturesMalt(boolean outputPos) throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
         expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
         expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
@@ -101,7 +126,41 @@ public class HadoopTest {
         unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(Knoll,@)")));
         unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)")));
 
-        runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt");
+        HashSet<String> withPos = new HashSet<>();
+        withPos.add("the#DT\t19");
+        withPos.add("then#RB\t1");
+        withPos.add("there#EX\t3");
+        withPos.add("this#DT\t3");
+        withPos.add("though#IN\t2");
+        withPos.add("through#IN\t1");
+        withPos.add("time#NN\t1");
+        withPos.add("to#TO\t6");
+        withPos.add("traffic#NN\t1");
+
+        HashSet<String> withoutPos = new HashSet<>();
+        withoutPos.add("the\t19");
+        withoutPos.add("there\t3");
+        withoutPos.add("this\t3");
+        withoutPos.add("though\t2");
+        withoutPos.add("through\t1");
+        withoutPos.add("time\t1");
+        withoutPos.add("to\t6");
+
+        if (outputPos) {
+            runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt", outputPos, 254, withPos, withoutPos);
+        } else {
+            runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt", outputPos, 241, withoutPos, withPos);
+        }
+    }
+
+    @Test
+    public void testDependencyHolingMweNoSelfFeaturesMaltNoPos() throws Exception {
+        runDependencyHolingMweNoSelfFeaturesMalt(false);
+    }
+
+    @Test
+    public void testDependencyHolingMweNoSelfFeaturesMaltPos() throws Exception {
+        runDependencyHolingMweNoSelfFeaturesMalt(true);
     }
 
     @Test
@@ -229,7 +288,7 @@ public class HadoopTest {
 
         String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 412);
+        assertEquals("Number of lines is wrong.", 412, lines.size());
 
         Set<String> expectedFeatures = new HashSet<>(Arrays.asList("place_@_#","#_@_yet", "sum_@_a", "give_@_of"));
         for(String line : lines) {
@@ -256,7 +315,7 @@ public class HadoopTest {
 
         String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
         List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
-        assertTrue("Number of lines is wrong.", lines.size() == 412);
+        assertEquals("Number of lines is wrong.", 412, lines.size());
 
         Set<String> expectedFeatures = new HashSet<>(Arrays.asList("was_@_very","#_@_yet", "sum_@_a", "gave_@_of", "other_@_products"));
         for(String line : lines) {
