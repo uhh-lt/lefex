@@ -1,19 +1,14 @@
 package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 
+import de.tudarmstadt.lt.jst.Utils.Format;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;
-
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-
 import de.tudarmstadt.lt.jst.Utils.Resources;
-
 import static org.junit.Assert.*;
 
 public class HadoopTest {
@@ -48,8 +43,8 @@ public class HadoopTest {
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
-        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
+        List<String> lines = Format.readGzipAsList(WFPath);
         assertEquals("Number of lines in WF file is wrong.", expectedLengthWF, lines.size());
 
         for(String line : lines) {
@@ -67,8 +62,8 @@ public class HadoopTest {
         assertEquals("Some expected features are missing in the WF file.", 0, expectedWFPairs.size());
 
         // Chech for presntes of part-os-speech tags
-        String wPath = (new File(paths.getOutputDir(), "W-r-00000")).getAbsolutePath();
-        List<String> wLines = Files.readAllLines(Paths.get(wPath), Charset.forName("UTF-8"));
+        String wPath = (new File(paths.getOutputDir(), "W-r-00000.gz")).getAbsolutePath();
+        List<String> wLines = Format.readGzipAsList(wPath);
         if (expectedLengthW != -1) {
             assertEquals("Number of lines in W file is wrong.", expectedLengthW, wLines.size());
         }
@@ -286,8 +281,8 @@ public class HadoopTest {
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
-        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
+        List<String> lines = Format.readGzipAsList(WFPath);
         assertEquals("Number of lines is wrong.", 412, lines.size());
 
         Set<String> expectedFeatures = new HashSet<>(Arrays.asList("place_@_#","#_@_yet", "sum_@_a", "give_@_of"));
@@ -313,8 +308,8 @@ public class HadoopTest {
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000")).getAbsolutePath();
-        List<String> lines = Files.readAllLines(Paths.get(WFPath), Charset.forName("UTF-8"));
+        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
+        List<String> lines = Format.readGzipAsList(WFPath);
         assertEquals("Number of lines is wrong.", 412, lines.size());
 
         Set<String> expectedFeatures = new HashSet<>(Arrays.asList("was_@_very","#_@_yet", "sum_@_a", "gave_@_of", "other_@_products"));

@@ -1,7 +1,9 @@
 package de.tudarmstadt.lt.jst.Utils;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.uima.jcas.JCas;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -11,9 +13,9 @@ import org.apache.uima.jcas.tcas.Annotation;
 
 public class Format {
 
-    public static String NOT_SEP = ";";
-    public static String NODES = "nodes.csv";
-    public static String EDGES = "edges.csv";
+    private static String NOT_SEP = ";";
+    private static String NODES = "nodes.csv";
+    private static String EDGES = "edges.csv";
 
 
     public static void ensureDir(String directoryPath){
@@ -153,4 +155,17 @@ public class Format {
         }
     }
 
+    public static List<String> readGzipAsList(String gzipPath) throws IOException {
+        InputStream fileStream = new FileInputStream(gzipPath);
+        InputStream gzipStream = new GZIPInputStream(fileStream);
+        Reader decoder = new InputStreamReader(gzipStream, Charset.forName("UTF-8"));
+        BufferedReader br = new BufferedReader(decoder);
+
+        String line;
+        List<String> res = new LinkedList<>();
+        while ((line = br.readLine()) != null) {
+            res.add(line);
+        }
+        return res;
+    }
 }

@@ -24,7 +24,7 @@ public class HadoopMain extends Configured implements Tool {
 
 	private boolean runJob(String inDir, String outDir) throws Exception {
 		Configuration conf = getConf();
-		conf.setBoolean("mapred.output.compress", false);
+		conf.setBoolean("mapred.output.compress", true);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(HadoopMain.class);
