@@ -29,7 +29,7 @@ public class HadoopMain extends Configured implements Tool {
 			_outDir = outDir + outDirSuffix;
 			outDirSuffix++;
 		}
-		conf.setBoolean("mapred.output.compress", false);
+		conf.setBoolean("mapred.output.compress", true);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(HadoopMain.class);
@@ -43,7 +43,7 @@ public class HadoopMain extends Configured implements Tool {
 		job.setOutputValueClass(LongWritable.class);
 		if (makeUnique) job.setReducerClass(HadoopReduce.class);
         else job.setReducerClass(NothingReducer.class);
-		job.setJobName("JoSimText - Fix Line Length");
+		job.setJobName("JoSimText: split by sentences and make them uniq.");
 		return job.waitForCompletion(true);
 	}
 
