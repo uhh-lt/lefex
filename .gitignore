@@ -1,4 +1,7 @@
+noun-sense-induction.iml
 target
 .project
 .classpath
 .settings
+.idea
+.idea/*
