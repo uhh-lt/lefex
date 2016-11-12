@@ -39,7 +39,7 @@ public class HadoopMain extends Configured implements Tool {
         job.setOutputValueClass(IntWritable.class);
         //job.setReducerClass(NothingReducer.class);
 
-        job.setJobName("JoSimText: ExtractSynCon");
+        job.setJobName("lefex: ExtractSynCon");
         return job.waitForCompletion(true);
     }
 

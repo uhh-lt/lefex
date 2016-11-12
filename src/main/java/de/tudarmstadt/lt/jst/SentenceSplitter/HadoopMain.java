@@ -43,7 +43,7 @@ public class HadoopMain extends Configured implements Tool {
 		job.setOutputValueClass(LongWritable.class);
 		if (makeUnique) job.setReducerClass(HadoopReduce.class);
         else job.setReducerClass(NothingReducer.class);
-		job.setJobName("JoSimText: split by sentences and make them uniq.");
+		job.setJobName("lefex: split by sentences and make them uniq.");
 		return job.waitForCompletion(true);
 	}
 

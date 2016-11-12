@@ -39,7 +39,7 @@ public class ExractLexicalSampleFeatures extends Configured implements Tool {
         job.setOutputValueClass(IntWritable.class);
         //job.setReducerClass(NothingReducer.class);
 
-        job.setJobName("JoSimText: ExtractLexicalSampleFeatures");
+        job.setJobName("lefex: ExtractLexicalSampleFeatures");
         return job.waitForCompletion(true);
     }
 

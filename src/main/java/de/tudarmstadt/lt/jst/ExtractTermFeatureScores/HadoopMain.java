@@ -51,7 +51,7 @@ public class HadoopMain extends Configured implements Tool {
 		if (mwePaths != null && mwePaths.length > 0 && mwePaths[0] != null) mwePath = mwePaths[0];
 		if (!mwePath.equals("")) job.addCacheFile(new URI(mwePath + "#mwe_voc"));
 
-		job.setJobName("JoSimText - Feature Extraction");
+		job.setJobName("lefex: Feature Extraction");
 		return job.waitForCompletion(true);
 	}
 
