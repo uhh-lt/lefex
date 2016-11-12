@@ -22,9 +22,9 @@ import org.apache.hadoop.util.ToolRunner;
 
 public class HadoopMain extends Configured implements Tool {
 
-	private boolean runJob(String inDir, String outDir) throws Exception {
+	private boolean runJob(String inDir, String outDir, boolean compressOutput) throws Exception {
 		Configuration conf = getConf();
-		conf.setBoolean("mapred.output.compress", true);
+		conf.setBoolean("mapred.output.compress", compressOutput);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(HadoopMain.class);
@@ -58,13 +58,18 @@ public class HadoopMain extends Configured implements Tool {
 	@Override
 	public int run(String[] args) throws Exception {
 		System.out.println("args:" + Arrays.asList(args));
-		if (args.length != 2) {
+		if (args.length != 3) {
 			System.out.println("Usage: <input-path-to-corpus> <output-path-to-features>");
 			System.exit(1);
 		}
 		String inDir = args[0];
 		String outDir = args[1];
-		boolean success = runJob(inDir, outDir);
+		boolean compressOutput = Boolean.parseBoolean(args[2]);
+		System.out.println("Input: " + inDir);
+		System.out.println("Output: " + outDir);
+		System.out.println("Compression: " + compressOutput);
+
+		boolean success = runJob(inDir, outDir, compressOutput);
 		return success ? 0 : 1;
 	}
 

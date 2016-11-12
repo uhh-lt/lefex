@@ -41,7 +41,7 @@ public class HadoopTest {
         conf.setStrings("holing.dependencies.parser", depParser);
         conf.setBoolean("holing.output_pos", outputPos);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
 
         String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
         List<String> lines = Format.readGzipAsList(WFPath);
@@ -216,7 +216,7 @@ public class HadoopTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 1);
         conf.setBoolean("holing.lemmatize", lemmatize);
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir, "true"});
     }
 
     @Test
@@ -229,7 +229,7 @@ public class HadoopTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 1);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
     }
 
     @Test
@@ -247,7 +247,8 @@ public class HadoopTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setInt("holing.processeach", 10);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{
+                inputPath, outputDir, "true"});
     }
 
     private String getTestCorpusPath() {
@@ -265,7 +266,7 @@ public class HadoopTest {
         conf.setStrings("holing.type", "trigram");
         conf.setBoolean("holing.nouns_only", false);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
     }
 
     @Test
@@ -279,7 +280,7 @@ public class HadoopTest {
         conf.setBoolean("holing.nouns_only", false);
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
 
         String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
         List<String> lines = Format.readGzipAsList(WFPath);
@@ -306,7 +307,7 @@ public class HadoopTest {
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
         conf.setBoolean("holing.lemmatize", false);
 
-        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
 
         String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
         List<String> lines = Format.readGzipAsList(WFPath);

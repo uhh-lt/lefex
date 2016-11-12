@@ -28,7 +28,8 @@ public class HadoopTest {
 
     private void run(String inputPath, String outputDir, boolean makeUniq, int expectedLinesNum) throws Exception {
         Configuration conf = new Configuration();
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir, String.valueOf(makeUniq)});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{
+                inputPath, outputDir, String.valueOf(makeUniq), "true"});
         String outputPath = (new File(outputDir, "part-r-00000.gz")).getAbsolutePath();
         List<String> lines = Format.readGzipAsList(outputPath);
         assertTrue("Number of lines is wrong.", lines.size() == expectedLinesNum);

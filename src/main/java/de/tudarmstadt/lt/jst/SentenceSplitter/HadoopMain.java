@@ -20,7 +20,7 @@ import java.io.File;
 import java.util.Arrays;
 
 public class HadoopMain extends Configured implements Tool {
-    public boolean runJob(String inDir, String outDir, boolean makeUnique) throws Exception {
+    public boolean runJob(String inDir, String outDir, boolean makeUnique, boolean compressOutput) throws Exception {
 		Configuration conf = getConf();
 		FileSystem fs = FileSystem.get(conf);
 		String _outDir = outDir;
@@ -29,7 +29,7 @@ public class HadoopMain extends Configured implements Tool {
 			_outDir = outDir + outDirSuffix;
 			outDirSuffix++;
 		}
-		conf.setBoolean("mapred.output.compress", true);
+		conf.setBoolean("mapred.output.compress", compressOutput);
 		conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
 		Job job = Job.getInstance(conf);
 		job.setJarByClass(HadoopMain.class);
@@ -49,22 +49,24 @@ public class HadoopMain extends Configured implements Tool {
 
 	public int run(String[] args) throws Exception {
 		System.out.println("args:" + Arrays.asList(args));
-		if (args.length != 3) {
+		if (args.length != 4) {
 			System.out.println("Outputs one sentence per line and drops too long sentences" +
 					" (e.g. as they an cause parsing errors).");
-			System.out.println("Usage: <input-corpus> <output-corpus> <unique-sentences>");
+			System.out.println("Usage: <input-corpus> <output-corpus> <unique-sentences> <compress>");
 			System.exit(1);
 		}
 		String inDir = args[0];
 		String outDir = args[1];
         boolean makeUnique = Boolean.parseBoolean(args[2]);
+		boolean compressOutput = Boolean.parseBoolean(args[3]);
         FileUtils.deleteDirectory(new File(outDir));
 
         System.out.println("Input text: " + inDir);
         System.out.println("Output directory: " + outDir);
         System.out.println("Unique sentences: " + makeUnique);
+		System.out.println("Compress output: " + compressOutput);
 
-        boolean success = runJob(inDir, outDir, makeUnique);
+        boolean success = runJob(inDir, outDir, makeUnique, compressOutput);
 		return success ? 0 : 1;
 	}
 
