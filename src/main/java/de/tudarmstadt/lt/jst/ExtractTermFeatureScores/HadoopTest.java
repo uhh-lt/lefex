@@ -110,17 +110,28 @@ public class HadoopTest {
 
     private void runDependencyHolingMweNoSelfFeaturesMalt(boolean outputPos) throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
-        expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
-        expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
-        expectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,park)","prep_along(proceed,@)","prep_on(continue,@)")));
-        expectedWF.put("Green pears", new LinkedList<>(Arrays.asList("subj(@,grow)")));
-
         HashMap<String, List<String>> unexpectedWF = new HashMap<>();
-        unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
-        unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
-        unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)","nn(Knoll,@)")));
-        unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)","nn(Green,@)")));
+        if (outputPos){
+            expectedWF.put("rarely#RB", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
+            expectedWF.put("very#RB", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
+            expectedWF.put("Knoll#NNP Road#NNP", new LinkedList<>(Arrays.asList("nn(@,park)", "prep_along(proceed,@)", "prep_on(continue,@)")));
+            expectedWF.put("Green#NNP pears#NNS", new LinkedList<>(Arrays.asList("subj(@,grow)")));
 
+            unexpectedWF.put("rarely#RB", new LinkedList<>(Arrays.asList("nn(@,the)")));
+            unexpectedWF.put("very#RB", new LinkedList<>(Arrays.asList("nn(@,the)")));
+            unexpectedWF.put("Knoll#NNP Road#NNP", new LinkedList<>(Arrays.asList("nn(@,Road)", "nn(Knoll,@)")));
+            unexpectedWF.put("Green#NNP pears#NNS", new LinkedList<>(Arrays.asList("nn(@,pear)", "nn(Green,@)")));
+        } else {
+            expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
+            expectedWF.put("very", new LinkedList<>(Arrays.asList("advmod(@,rigid)")));
+            expectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,park)", "prep_along(proceed,@)", "prep_on(continue,@)")));
+            expectedWF.put("Green pears", new LinkedList<>(Arrays.asList("subj(@,grow)")));
+
+            unexpectedWF.put("rarely", new LinkedList<>(Arrays.asList("nn(@,the)")));
+            unexpectedWF.put("very", new LinkedList<>(Arrays.asList("nn(@,the)")));
+            unexpectedWF.put("Knoll Road", new LinkedList<>(Arrays.asList("nn(@,Road)", "nn(Knoll,@)")));
+            unexpectedWF.put("Green pears", new LinkedList<>(Arrays.asList("nn(@,pear)", "nn(Green,@)")));
+        }
         HashSet<String> withPos = new HashSet<>();
         withPos.add("the#DT\t19");
         withPos.add("then#RB\t1");
@@ -142,7 +153,7 @@ public class HadoopTest {
         withoutPos.add("to\t6");
 
         if (outputPos) {
-            runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt", outputPos, 254, withPos, withoutPos);
+            runDependencyHoling(false, true, false, 742, expectedWF, unexpectedWF, "malt", outputPos, 254, withPos, withoutPos);
         } else {
             runDependencyHoling(false, true, false, 741, expectedWF, unexpectedWF, "malt", outputPos, 241, withoutPos, withPos);
         }

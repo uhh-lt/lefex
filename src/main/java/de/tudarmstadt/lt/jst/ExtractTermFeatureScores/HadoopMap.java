@@ -292,20 +292,22 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             if (nounNounDependenciesOnly && (!governorPos.equals("NN") || !governorPos.equals("NNS"))) continue;
             String bim = dependent.getBegin() < governor.getBegin() ? dtype + "(" + dependentLemma + ",@)" : dtype + "(@," + dependentLemma + ")";
             context.write(new Text("F\t" + bim), ONE);
-            context.write(new Text("WF\t" + governorLemma + "\t" + bim), ONE);
+            String governorLemmaOut = outputPos ? governorLemma + POS_SEP + governorPos : governorLemma;
+            context.write(new Text("WF\t" + governorLemmaOut + "\t" + bim), ONE); // part of speech is outputed only for words, not for features to reduce sparcity
 
             // Save inverse dependency as a feature
             if (nounNounDependenciesOnly && (!dependentPos.equals("NN") && !dependentPos.equals("NNS"))) continue;
             String ibim = dependent.getBegin() < governor.getBegin() ? dtype + "(@," + governorLemma + ")" : dtype + "(" + governorLemma + ",@)";
 
             context.write(new Text("F\t" + ibim), ONE);
-            context.write(new Text("WF\t" + dependentLemma + "\t" + ibim), ONE);
+            String dependentLemmaOut = outputPos ? dependentLemma + POS_SEP + dependentPos : dependentLemma;
+            context.write(new Text("WF\t" + dependentLemmaOut + "\t" + ibim), ONE);
 
             // Generate features for multiword expressions
             String governorNgram = findNgram(ngrams, governor.getBegin(), governor.getEnd());
             String dependantNgram = findNgram(ngrams, dependent.getBegin(), dependent.getEnd());
             if (!governorNgram.equals("") && governorNgram.equals(dependantNgram) && !useNgramSelfFeatures) {
-                // do not generate self-reference features
+                // do not generate self-reference ngram features
             } else {
                 if (!governorNgram.equals("")) context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
                 if (!dependantNgram.equals("")) context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
@@ -315,9 +317,23 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-    private String findNgram(List<NamedEntity> ngrams, int beginSpan, int endSpan){
+    /**
+     * If a token in the given range overlaps with an ngram => associate features of the token with the ngram.
+     * */
+    private String findNgram(List<NamedEntity> ngrams, int beginToken, int endToken){
         for (Annotation ngram : ngrams){
-            if (ngram.getBegin() <= beginSpan && ngram.getEnd() >= endSpan) return ngram.getCoveredText();
+            if (ngram.getBegin() <= beginToken && ngram.getEnd() >= endToken) {
+                if (outputPos && lemmatize) {
+                    String ngramStr = "";
+                    Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram.getBegin(), ngram.getEnd());
+                    for (Token nt: ngramTokens){
+                        ngramStr += nt.getCoveredText() + POS_SEP + nt.getPos().getPosValue() + " ";
+                    }
+                    return ngramStr.trim();
+                } else {
+                    return ngram.getCoveredText();
+                }
+            }
         }
         return "";
     }
