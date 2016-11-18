@@ -37,6 +37,7 @@ import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
     static final String POS_SEP = "#";
+    static boolean VERBOSE = false;
 
     Logger log = Logger.getLogger("de.tudarmstadt.lt.jst");
 	AnalysisEngine segmenter;
@@ -228,7 +229,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 }
             }
         } catch(Exception e){
-            log.error("Can't process line: " + value.toString(), e);
+            if (VERBOSE) log.error("Can't process line: " + value.toString(), e);
             context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
         }
     }
