@@ -59,7 +59,7 @@ public class HadoopMain extends Configured implements Tool {
 	public int run(String[] args) throws Exception {
 		System.out.println("args:" + Arrays.asList(args));
 		if (args.length != 3) {
-			System.out.println("Usage: <input-path-to-corpus> <output-path-to-features>");
+			System.out.println("Usage: <input-path-to-corpus> <output-path-to-features> <compression>");
 			System.exit(1);
 		}
 		String inDir = args[0];

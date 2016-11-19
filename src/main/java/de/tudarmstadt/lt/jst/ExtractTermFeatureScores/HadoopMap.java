@@ -37,7 +37,6 @@ import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
     static final String POS_SEP = "#";
-    static boolean VERBOSE = false;
 
     Logger log = Logger.getLogger("de.tudarmstadt.lt.jst");
 	AnalysisEngine segmenter;
@@ -48,6 +47,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     AnalysisEngine nerEngine;
 
     JCas jCas;
+    boolean verbose;
     boolean semantifyDependencies;
 	String holingType;
 	boolean computeCoocs;
@@ -66,6 +66,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	public void setup(Context context) throws IOException {
         processEach = context.getConfiguration().getInt("holing.process_each", 1);
         log.info("Process each: " + processEach);
+
+        verbose = context.getConfiguration().getBoolean("holing.verbose", false);
+        log.info("Verbose: " + verbose);
 
         String mwePath = "";
         if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) mwePath = new File("./mwe_voc").getAbsolutePath();
@@ -171,11 +174,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
 
                 if (tokens.size() > maxSentenceLength) {
-                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_SKIPPED_SENTENCES").increment(1);
-                    return;
-                } else {
-                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_PROCESSED_SENTENCES").increment(1);
+                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_SKIPPED_SENTENCES_BY_SIZE").increment(1);
+                    continue;
                 }
+                context.getCounter("de.tudarmstadt.lt.jst", "NUM_INPUT_SENTENCES").increment(1);
 
                 // W: word count -- single words
                 Set<String> words = new HashSet<>();
@@ -229,8 +231,8 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 }
             }
         } catch(Exception e){
-            if (VERBOSE) log.error("Can't process line: " + value.toString(), e);
-            context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
+            if (verbose) log.error("Can't process line: " + value.toString(), e);
+            context.getCounter("de.tudarmstadt.lt.jst", "NUM_MAP_ERRORS").increment(1);
         }
     }
 
@@ -266,7 +268,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 context.progress();
             }
         } catch (Exception exc) {
-            context.getCounter("de.tudarmstadt.lt.jst", "HOLING_EXCEPTIONS").increment(1);
+            context.getCounter("de.tudarmstadt.lt.jst", "NUM_HOLING_EXCEPTIONS").increment(1);
         }
     }
 

@@ -16,6 +16,20 @@
     </repositories>
 
     <dependencies>
+        <!--<dependency>-->
+            <!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
+            <!--<artifactId>-->
+                <!--de.tudarmstadt.ukp.dkpro.core.stanfordnlp-model-ner-en-all.3class.distsim.crf-->
+            <!--</artifactId>-->
+            <!--<version>LATEST</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
+            <!--<artifactId>-->
+                <!--de.tudarmstadt.ukp.dkpro.core.stanfordnlp-upstream-ner-en-all.3class.distsim.crf-->
+            <!--</artifactId>-->
+            <!--<version>LATEST</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>

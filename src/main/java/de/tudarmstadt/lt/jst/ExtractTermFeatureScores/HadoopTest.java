@@ -26,7 +26,7 @@ public class HadoopTest {
         String depParser, boolean outputPos, int expectedLengthW,
         HashSet<String> expectedWFreq, HashSet<String> unexpectedWFreq) throws Exception
     {
-        TestPaths paths = new TestPaths().invoke();
+        TestPaths paths = new TestPaths("");
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -170,6 +170,37 @@ public class HadoopTest {
     }
 
     @Test
+    public void testDependencyHolingMweNoSelfFeaturesMaltPosTestingNER() throws Exception {
+        TestPaths paths = new TestPaths("ukwac50mb");
+
+        Configuration conf = new Configuration();
+        conf.setBoolean("holing.coocs", false);
+        conf.setInt("holing.sentences.maxlength", 110);
+        conf.setStrings("holing.type", "dependency");
+        conf.setBoolean("holing.dependencies.semantify", true);
+        conf.setBoolean("holing.nouns_only", false);
+        conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
+        conf.setBoolean("holing.lemmatize", true);
+        conf.setBoolean("holing.mwe.ner", true);
+        conf.setBoolean("holing.verbose", true);
+
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
+
+//        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
+//        List<String> lines = Format.readGzipAsList(WFPath);
+//        assertEquals("Number of lines is wrong.", 412, lines.size());
+//
+//        Set<String> expectedFeatures = new HashSet<>(Arrays.asList("was_@_very","#_@_yet", "sum_@_a", "gave_@_of", "other_@_products"));
+//        for(String line : lines) {
+//            String[] fields = line.split("\t");
+//            String feature = fields.length == 3 ? fields[1] : "";
+//            if (expectedFeatures.contains(feature)) expectedFeatures.remove(feature);
+//        }
+//        assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
+
+    }
+
+    @Test
     public void testDependencyHolingMweNoSelfFeaturesStanford() throws Exception {
         HashMap<String, List<String>> expectedWF = new HashMap<>();
         expectedWF.put("rarely", new LinkedList<>(Arrays.asList("advmod(@,fit)")));
@@ -232,7 +263,7 @@ public class HadoopTest {
 
     @Test
     public void testTrigramWithCoocsBig() throws Exception {
-        TestPaths paths = new TestPaths().invoke();
+        TestPaths paths = new TestPaths("");
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", true);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -268,9 +299,16 @@ public class HadoopTest {
         return file.getAbsolutePath();
     }
 
+    private String getNerTestCorpusPath() {
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("data/ner-error-text.txt").getFile());
+        return file.getAbsolutePath();
+    }
+
+
     @Test
     public void testTrigramWithCoocs() throws Exception {
-        TestPaths paths = new TestPaths().invoke();
+        TestPaths paths = new TestPaths("");
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", true);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -282,7 +320,7 @@ public class HadoopTest {
 
     @Test
     public void testTrigram() throws Exception {
-        TestPaths paths = new TestPaths().invoke();
+        TestPaths paths = new TestPaths("");
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -308,7 +346,7 @@ public class HadoopTest {
 
     @Test
     public void testTrigramNoLemmatization() throws Exception {
-        TestPaths paths = new TestPaths().invoke();
+        TestPaths paths = new TestPaths("");
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
         conf.setInt("holing.sentences.maxlength", 100);
@@ -334,6 +372,16 @@ public class HadoopTest {
     }
 
     private class TestPaths {
+        public TestPaths(String corpusType) throws IOException {
+            if (corpusType.equals("ner")) inputPath = getNerTestCorpusPath();
+            else if(corpusType.equals("ukwac50mb")) inputPath = "/Users/alex/Desktop/ukwac-small.txt";
+            else inputPath = getTestCorpusPath();
+            outputDir = inputPath + "-out";
+            FileUtils.deleteDirectory(new File(outputDir));
+            System.out.println("Input text: " + inputPath);
+            System.out.println("Output directory: "+  outputDir);
+        }
+
         private String inputPath;
         private String outputDir;
 
@@ -343,15 +391,6 @@ public class HadoopTest {
 
         public String getOutputDir() {
             return outputDir;
-        }
-
-        public TestPaths invoke() throws IOException {
-            inputPath = getTestCorpusPath();
-            outputDir = inputPath + "-out";
-            FileUtils.deleteDirectory(new File(outputDir));
-            System.out.println("Input text: " + inputPath);
-            System.out.println("Output directory: "+  outputDir);
-            return this;
         }
     }
 }
