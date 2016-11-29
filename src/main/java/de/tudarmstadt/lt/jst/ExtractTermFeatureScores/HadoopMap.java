@@ -127,7 +127,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                     DictionaryAnnotator.PARAM_EXTENDED_MATCH, "true");
             }
             if(mweByNER){
-                nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class);
+                nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,
+                        StanfordNamedEntityRecognizer.PARAM_LANGUAGE, "en",
+                        StanfordNamedEntityRecognizer.PARAM_VARIANT, "all.3class.distsim.crf"); // "all.3class.caseless.distsim.crf"); // "all.3class.distsim.crf");
             }
 
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
@@ -182,6 +184,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 // W: word count -- single words
                 Set<String> words = new HashSet<>();
                 for (Token wordToken : tokens) {
+                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_INPUT_TOKENS").increment(1);
                     String word;
                     if (lemmatize) word = wordToken.getLemma().getValue();
                     else word = wordToken.getCoveredText();
@@ -197,6 +200,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 // W: word count -- ngrams
                 List<NamedEntity> ngrams = filterNgrams(JCasUtil.selectCovered(jCas, NamedEntity.class, sentence.getBegin(), sentence.getEnd()));
                 for (NamedEntity ngram : ngrams) {
+                    context.getCounter("de.tudarmstadt.lt.jst", "NUM_INPUT_MWE").increment(1);
                     String ngramStr = "";
                     if (outputPos && lemmatize){
                         Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram.getBegin(), ngram.getEnd());

@@ -171,7 +171,7 @@ public class HadoopTest {
 
     @Test
     public void testDependencyHolingMweNoSelfFeaturesMaltPosTestingNER() throws Exception {
-        TestPaths paths = new TestPaths("ukwac50mb");
+        TestPaths paths = new TestPaths("ner");
 
         Configuration conf = new Configuration();
         conf.setBoolean("holing.coocs", false);
@@ -374,7 +374,6 @@ public class HadoopTest {
     private class TestPaths {
         public TestPaths(String corpusType) throws IOException {
             if (corpusType.equals("ner")) inputPath = getNerTestCorpusPath();
-            else if(corpusType.equals("ukwac50mb")) inputPath = "/Users/alex/Desktop/ukwac-small.txt";
             else inputPath = getTestCorpusPath();
             outputDir = inputPath + "-out";
             FileUtils.deleteDirectory(new File(outputDir));
