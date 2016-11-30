@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.*;
 
 import de.tudarmstadt.lt.jst.Const;
-import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.hadoop.io.IntWritable;

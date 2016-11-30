@@ -52,28 +52,12 @@
             <version>4.12</version>
         </dependency>
 
-        <!-- Components begin -->
+        <!-- DKPro begin -->
 
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
                 de.tudarmstadt.ukp.dkpro.core.stanfordnlp-gpl
-            </artifactId>
-            <version>1.8.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
-            <artifactId>
-                de.tudarmstadt.ukp.dkpro.core.maltparser-asl
-            </artifactId>
-            <version>1.8.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
-            <artifactId>
-                de.tudarmstadt.ukp.dkpro.core.opennlp-asl
             </artifactId>
             <version>1.8.0</version>
         </dependency>
@@ -89,7 +73,7 @@
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
-                de.tudarmstadt.ukp.dkpro.core.api.parameter-asl
+                de.tudarmstadt.ukp.dkpro.core.opennlp-asl
             </artifactId>
             <version>1.8.0</version>
         </dependency>
@@ -97,37 +81,10 @@
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
             <artifactId>
-                de.tudarmstadt.ukp.dkpro.core.matetools-gpl
+                de.tudarmstadt.ukp.dkpro.core.maltparser-asl
             </artifactId>
             <version>1.8.0</version>
         </dependency>
-
-        <!-- Components end -->
-
-        <!-- Resources begin -->
-
-
-        <dependency>
-        <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
-        <artifactId>de.tudarmstadt.ukp.dkpro.core.stanfordnlp-model-ner-en-all.3class.nodistsim.crf</artifactId>
-        <version>20160110.1</version>
-        </dependency>
-
-        <!--<dependency>-->
-        <!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
-        <!--<artifactId>-->
-        <!--de.tudarmstadt.ukp.dkpro.core.stanfordnlp-model-ner-en-all.3class.distsim.crf-->
-        <!--</artifactId>-->
-        <!--<version>LATEST</version>-->
-        <!--</dependency>-->
-
-        <!--<dependency>-->
-        <!--<groupId>de.tudarmstadt.ukp.dkpro.core</groupId>-->
-        <!--<artifactId>-->
-        <!--de.tudarmstadt.ukp.dkpro.core.stanfordnlp-upstream-ner-en-all.3class.distsim.crf-->
-        <!--</artifactId>-->
-        <!--<version>LATEST</version>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
@@ -136,7 +93,14 @@
             </artifactId>
             <version>20120312</version>
         </dependency>
-        <!-- Resources end -->
+
+        <dependency>
+            <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+            <artifactId>de.tudarmstadt.ukp.dkpro.core.stanfordnlp-model-ner-en-all.3class.distsim.crf</artifactId>
+            <version>20150420.1</version>
+        </dependency>
+
+        <!-- DKPro end -->
     </dependencies>
 
     <build>

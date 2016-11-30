@@ -183,7 +183,8 @@ public class HadoopTest {
         conf.setBoolean("holing.lemmatize", true);
         conf.setBoolean("holing.mwe.ner", true);
         conf.setBoolean("holing.verbose", true);
-
+        String mwePath = Resources.getJarResourcePath("data/voc-ner.csv");
+        conf.setStrings("holing.mwe.vocabulary", mwePath);
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
 
 //        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();

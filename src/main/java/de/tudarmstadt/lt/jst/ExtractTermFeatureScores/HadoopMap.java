@@ -5,13 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import de.tudarmstadt.lt.jst.Const;
-import de.tudarmstadt.lt.jst.Utils.StanfordLemmatizer;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
-import de.tudarmstadt.ukp.dkpro.core.matetools.MateParser;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
-import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 import edu.stanford.nlp.util.Pair;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -31,8 +27,13 @@ import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
-import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
+//import de.tudarmstadt.ukp.dkpro.core.matetools.MateParser;
+//import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
+
 
 class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
@@ -52,7 +53,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 	String holingType;
 	boolean computeCoocs;
 	int maxSentenceLength;
-    boolean nounNounDependenciesOnly;
     boolean lemmatize;
     boolean mweByDicionary;
     int processEach;
@@ -96,9 +96,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         lemmatize = context.getConfiguration().getBoolean("holing.lemmatize", true);
         log.info("Lemmatize: " + lemmatize);
 
-        nounNounDependenciesOnly = context.getConfiguration().getBoolean("holing.dependencies.noun_noun_dependencies_only", false);
-        log.info("Noun-noun dependencies only: " + nounNounDependenciesOnly);
-
         depParserType = context.getConfiguration().getStrings("holing.dependencies.parser", "malt")[0];
         log.info("Dependency parser: " + depParserType);
 
@@ -109,15 +106,15 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         log.info("Output part-of-speech tags: " + outputPos);
 
         try {
-			segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
+			segmenter = AnalysisEngineFactory.createEngine(StanfordSegmenter.class);
 			if (lemmatize) {
                 posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
                 lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
             }
 			if (holingType.equals("dependency")) synchronized(MaltParser.class) {
                 if (depParserType.equals("malt")) depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
-                else if (depParserType.equals("mate")) depParser = AnalysisEngineFactory.createEngine(MateParser.class);
-                else if (depParserType.equals("stanford")) depParser = AnalysisEngineFactory.createEngine(StanfordParser.class);
+                //else if (depParserType.equals("mate")) depParser = AnalysisEngineFactory.createEngine(MateParser.class);
+                //else if (depParserType.equals("stanford")) depParser = AnalysisEngineFactory.createEngine(StanfordParser.class);
                 else depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
 			}
             if(mweByDicionary && mwePath != ""){
@@ -129,7 +126,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             if(mweByNER){
                 nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,
                         StanfordNamedEntityRecognizer.PARAM_LANGUAGE, "en",
-                        StanfordNamedEntityRecognizer.PARAM_VARIANT, "all.3class.distsim.crf"); // "all.3class.caseless.distsim.crf"); // "all.3class.distsim.crf");
+                        StanfordNamedEntityRecognizer.PARAM_VARIANT, "all.3class.distsim.crf");
             }
 
 			jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
@@ -140,6 +137,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 		}
 	}
 
+    /**
+     * Filter out single-word named entities (they are already counted as tokens) and
+     * */
     private List<NamedEntity> filterNgrams(List<NamedEntity> ngrams){
         List<NamedEntity> ngramsFiltered = new LinkedList<>();
         HashSet<Pair<Integer,Integer>> coveredRanges = new HashSet<>();
@@ -173,7 +173,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             if (holingType.equals("dependency")) depParser.process(jCas);
 
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
-                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
+                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence);
 
                 if (tokens.size() > maxSentenceLength) {
                     context.getCounter("de.tudarmstadt.lt.jst", "NUM_SKIPPED_SENTENCES_BY_SIZE").increment(1);
@@ -198,12 +198,12 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
                 }
 
                 // W: word count -- ngrams
-                List<NamedEntity> ngrams = filterNgrams(JCasUtil.selectCovered(jCas, NamedEntity.class, sentence.getBegin(), sentence.getEnd()));
+                List<NamedEntity> ngrams = filterNgrams(JCasUtil.selectCovered(jCas, NamedEntity.class, sentence));
                 for (NamedEntity ngram : ngrams) {
                     context.getCounter("de.tudarmstadt.lt.jst", "NUM_INPUT_MWE").increment(1);
                     String ngramStr = "";
                     if (outputPos && lemmatize){
-                        Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram.getBegin(), ngram.getEnd());
+                        Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram);
                         for (Token nt: ngramTokens){
                             ngramStr += nt.getCoveredText() + POS_SEP + nt.getPos().getPosValue() + " ";
                         }
@@ -227,11 +227,11 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
                 // WF and F: word-feature counts and feature counts
                 if (holingType.equals("dependency")) {
-                    dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
+                    dependencyHoling(context, tokens, ngrams, sentence);
                 } else if(holingType.equals("trigram")) {
                     trigramHoling(context, tokens, ngrams);
                 } else {
-                    dependencyHoling(context, tokens, ngrams, sentence.getBegin(), sentence.getEnd());
+                    dependencyHoling(context, tokens, ngrams, sentence);
                 }
             }
         } catch(Exception e){
@@ -276,10 +276,10 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         }
     }
 
-    private void dependencyHoling(Context context, Collection<Token> tokens, List<NamedEntity> ngrams, int beginSentence, int endSentence)
+    private void dependencyHoling(Context context, Collection<Token> tokens, List<NamedEntity> ngrams, Sentence sentence)
             throws AnalysisEngineProcessException, IOException, InterruptedException
     {
-        Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, beginSentence, endSentence);
+        Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence);
         Collection<Dependency> depsCollapsed = Format.collapseDependencies(jCas, deps, tokens);
         for (Dependency dep : depsCollapsed) {
             // Get dependency
@@ -295,14 +295,12 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             if (governorLemma == null || dependentLemma == null || skipByDependencyType) continue;
 
             // Save the dependenc1y as a feature
-            if (nounNounDependenciesOnly && (!governorPos.equals("NN") || !governorPos.equals("NNS"))) continue;
             String bim = dependent.getBegin() < governor.getBegin() ? dtype + "(" + dependentLemma + ",@)" : dtype + "(@," + dependentLemma + ")";
             context.write(new Text("F\t" + bim), ONE);
             String governorLemmaOut = outputPos ? governorLemma + POS_SEP + governorPos : governorLemma;
             context.write(new Text("WF\t" + governorLemmaOut + "\t" + bim), ONE); // part of speech is outputed only for words, not for features to reduce sparcity
 
             // Save inverse dependency as a feature
-            if (nounNounDependenciesOnly && (!dependentPos.equals("NN") && !dependentPos.equals("NNS"))) continue;
             String ibim = dependent.getBegin() < governor.getBegin() ? dtype + "(@," + governorLemma + ")" : dtype + "(" + governorLemma + ",@)";
 
             context.write(new Text("F\t" + ibim), ONE);
@@ -331,7 +329,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             if (ngram.getBegin() <= beginToken && ngram.getEnd() >= endToken) {
                 if (outputPos && lemmatize) {
                     String ngramStr = "";
-                    Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram.getBegin(), ngram.getEnd());
+                    Collection<Token> ngramTokens = JCasUtil.selectCovered(jCas, Token.class, ngram);
                     for (Token nt: ngramTokens){
                         ngramStr += nt.getCoveredText() + POS_SEP + nt.getPos().getPosValue() + " ";
                     }
