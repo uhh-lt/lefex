@@ -14,21 +14,26 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.CasCreationUtils;
-
 import java.io.IOException;
 import java.util.Collection;
-
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
+import org.jsoup.Jsoup;
+
 
 class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
 	AnalysisEngine segmenter;
 	JCas jCas;
-    int maxSentenceSize = 150;  // tokens
+    int maxSentenceSizeTokens;
+    boolean stripHtml;
 
 	@Override
 	public void setup(Context context) {
-        maxSentenceSize = context.getConfiguration().getInt("max_sentences_size", 150);
+        maxSentenceSizeTokens = context.getConfiguration().getInt("max_sentence_size", 110);
+        stripHtml = context.getConfiguration().getBoolean("strip_html", false);
+        log.info("Max sentence size (tokens): " + maxSentenceSizeTokens);
+        log.info("Strip HTML tags: " + stripHtml);
+
         try {
             segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
             jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
@@ -44,6 +49,8 @@ class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
 		throws IOException, InterruptedException {
 		try {
             String text = value.toString();
+            if (stripHtml) text = Jsoup.parse(text).text();
+
             context.getCounter("de.tudarmstadt.lt", "TOTAL_LINES").increment(1);
             jCas.reset();
             jCas.setDocumentText(text);
@@ -51,10 +58,12 @@ class HadoopMap extends Mapper<LongWritable, Text, LongWritable, Text> {
             segmenter.process(jCas);
 
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
-                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
-                context.getCounter("de.tudarmstadt.lt", "TOTAL_SENTENCES").increment(1);
-                if(tokens.size() <= maxSentenceSize) {
-                    String sentenceStr = text.substring(sentence.getBegin(), sentence.getEnd()).replaceAll("\\s+", " ");
+                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence);
+                context.getCounter("de.tudarmstadt.lt", "SENTENCES_TOTAL").increment(1);
+                if(tokens.size() <= maxSentenceSizeTokens) {
+                    String sentenceStr = text
+                            .substring(sentence.getBegin(), sentence.getEnd())
+                            .replaceAll("\\s+", " ");
                     context.write(new LongWritable(sentenceStr.hashCode()), new Text(sentenceStr));
                     context.getCounter("de.tudarmstadt.lt", "SENTENCES_WRITTEN").increment(1);
                 } else {

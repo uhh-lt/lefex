@@ -1,0 +1,46 @@
+<h1>Website Usability Tips, Tricks and Mistakes. Roundup from DesignFloat</h1>
+<p>Being one of the most important aspects of web design, usability turns out to be the hot topic of various posts today. It doesn't matter with what type of project you are working, you should realize the importance of its usability. It is the key point for those who want to make their customers happy. If you want to improve your work and make it really effective, Website Usability Tips , tricks and mistakes will be of a great use for you. Usability tips will help you find smart solutions to make your websites user-friendly.</p>
+
+<h1>Revision history of "User:RachmaninovDESU"</h1>
+<legend>Browse history From year (and earlier): From month (and earlier): all January February March April May June July August September October November December &nbsp;</legend>
+<p>Diff selection: Mark the radio boxes of the revisions to compare and hit enter or the button at the bottom. Legend: (cur) = difference with latest revision, (prev) = difference with preceding revision, m = minor edit.</p>
+<span>(cur | prev ) 12:14, 19 July 2012 ‎ RachmaninovDESU ( Talk | contribs ) ‎ . . (272 bytes) (-6,003) ‎ . . (Replaced content with "*http://www.google.com/insights/search/#q=Sonichu%2C%22Christian%20Weston%20Chandler%22%2Ccwcki%2Casperchu%2C%22Mary%20Lee%20Walsh&amp;cmpt=q *http://www.google.com/insights/s...")</span>
+
+<dd>Contains a sub-part of the current audio recording, which is marked-up using any element available in hAudio.</dd>
+<dt>category</dt>
+<dd>The amount of currency that must be exchanged for acquisition of a full specimen of the audio recording.</dd>
+<h2>Copyright</h2>
+<p>Contributed to the public domain (PD) 2010 microformats.org, per the Creative Commons Public Domain License or any later version published by Creative Commons; with a waiver of rights, and an assertion that no rights attach to this particular work.</p>
+
+<ins>* The kernel module build no longer fails on kernel version 2.6.22. Further details can be found in topic number 737-28556</ins>
+<ins>* Starting AMD CCC-LE no longer fails with a floating-point exception when started in certain configurations. Further details can be found in topic number 737-28557</ins>
+<ins>* When playing videos in I420 color format using the Xv extension and TexturedVideo (the default on R5xx), colors are no longer displayed incorrectly. Further details can be found in topic number 737-28558</ins>
+<td>+</td>
+<ins>* Running aticonfig --initial in X with the Vesa driver no longer segfaults resulting in the xorg.conf file not being available. Further details can be found in topic number 737-28559</ins>
+<ins>* Video Tearing may be seen during playback in XV using GLESX. Further details can be found in topic number 737-26984</ins>
+<ins>* A black screen may be observed on some hardware when switching to the console or leaving the X window system when a Vesa framebuffer console driver is used. Further details can be found in topic number 737-28558</ins>
+<td>+</td>
+<ins>* Corruption may be observed with certain applications on some Linux distributions which enable the Composite extension by default, e.g., RHEL 5. If you are observing application corruption, please disable the Composite extension. Further details can be found in topic number 737-28224</ins>
+<td>+</td>
+<ins>* Using the xgl enabled x-server interface disables display switching hot plug support</ins>
+<td>+</td>
+<ins>* There is no support for video playback on the second head in dual head mode. Further details can be found in topic number 737-26985</ins>
+<ins>* Composite Extension: The ATI driver is far behind other open source Xorg drivers in supporting Composite extension. Clearly they are not keeping up and will benefit significantly by releasing their source code under GPL or BSD or MIT license.</ins>
+<td>+</td>
+<ins>* Removing the need to enable module support in the kernel to fully install the driver. It will work without it, but that doesn't enable DRI. This is possible by releasing their source code under the GPL license, and creating a patch for the kernel.</ins>
+<h2>Latest revision as of 13:35, 17 March 2013</h2>
+<h2>Contents</h2>
+<li>The kernel module build no longer fails on kernel version 2.6.22. Further details can be found in topic number 737-28556</li>
+<li>Starting AMD CCC-LE no longer fails with a floating-point exception when started in certain configurations. Further details can be found in topic number 737-28557</li>
+<li>When playing videos in I420 color format using the Xv extension and TexturedVideo (the default on R5xx), colors are no longer displayed incorrectly. Further details can be found in topic number 737-28558</li>
+<li>Running aticonfig --initial in X with the Vesa driver no longer segfaults resulting in the xorg.conf file not being available. Further details can be found in topic number 737-28559</li>
+<span>Known Issues</span>
+<li>Video Tearing may be seen during playback in XV using GLESX. Further details can be found in topic number 737-26984</li>
+<li>A black screen may be observed on some hardware when switching to the console or leaving the X window system when a Vesa framebuffer console driver is used. Further details can be found in topic number 737-28558</li>
+<li>Corruption may be observed with certain applications on some Linux distributions which enable the Composite extension by default, e.g., RHEL 5. If you are observing application corruption, please disable the Composite extension. Further details can be found in topic number 737-28224</li>
+<li>Using the xgl enabled x-server interface disables display switching hot plug support</li>
+<li>There is no support for video playback on the second head in dual head mode. Further details can be found in topic number 737-26985</li>
+<span>Feature Wish List</span>
+<p>The following features are still not supported properly by ATI's driver:</p>
+<li>Composite Extension: The ATI driver is far behind other open source Xorg drivers in supporting Composite extension. Clearly they are not keeping up and will benefit significantly by releasing their source code under GPL or BSD or MIT license.</li>
+<li>Removing the need to enable module support in the kernel to fully install the driver. It will work without it, but that doesn't enable DRI. This is possible by releasing their source code under the GPL license, and creating a patch for the kernel.</li>
