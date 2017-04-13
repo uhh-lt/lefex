@@ -45,6 +45,7 @@ public class HadoopMain extends Configured implements Tool {
 		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "WF", TextOutputFormat.class, Text.class, IntWritable.class);
+		MultipleOutputs.addNamedOutput(job, "CoNLL", TextOutputFormat.class, Text.class, IntWritable.class);
 
 		String[] mwePaths = conf.getStrings("holing.mwe.vocabulary", "");
 		String mwePath = "";
@@ -57,14 +58,21 @@ public class HadoopMain extends Configured implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
+		boolean compressOutput = false;
+		String inDir = "";
+		String outDir = "";
 		System.out.println("args:" + Arrays.asList(args));
-		if (args.length != 3) {
-			System.out.println("Usage: <input-path-to-corpus> <output-path-to-features> <compression>");
+		if (args.length < 2) {
+			System.out.println("Usage: <input-path-to-corpus> <output-path-to-features> [<compression>]");
 			System.exit(1);
+		} else {
+			inDir = args[0];
+			outDir = args[1];
 		}
-		String inDir = args[0];
-		String outDir = args[1];
-		boolean compressOutput = Boolean.parseBoolean(args[2]);
+		if (args.length >= 3) {
+			compressOutput = Boolean.parseBoolean(args[2]);
+		}
+
 		System.out.println("Input: " + inDir);
 		System.out.println("Output: " + outDir);
 		System.out.println("Compression: " + compressOutput);

@@ -61,6 +61,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     String depParserType;
     boolean useDependencyTypeStoplist;
     boolean outputPos;
+    boolean outputParse;
 
 	@Override
 	public void setup(Context context) throws IOException {
@@ -105,6 +106,9 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         outputPos = context.getConfiguration().getBoolean("holing.output_pos", true);
         log.info("Output part-of-speech tags: " + outputPos);
 
+        outputParse = context.getConfiguration().getBoolean("output.conll_parse", false);
+        log.info("Output CoNLL parse: " + outputParse);
+
         try {
 			segmenter = AnalysisEngineFactory.createEngine(StanfordSegmenter.class);
 			if (lemmatize) {
@@ -113,6 +117,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             }
 			if (holingType.equals("dependency")) synchronized(MaltParser.class) {
                 if (depParserType.equals("malt")) depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
+                // Ignoring other parsers due to dependency incompatibilities in this version
                 //else if (depParserType.equals("mate")) depParser = AnalysisEngineFactory.createEngine(MateParser.class);
                 //else if (depParserType.equals("stanford")) depParser = AnalysisEngineFactory.createEngine(StanfordParser.class);
                 else depParser = AnalysisEngineFactory.createEngine(MaltParser.class);
@@ -315,6 +320,11 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             } else {
                 if (!governorNgram.equals("")) context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
                 if (!dependantNgram.equals("")) context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
+            }
+
+            if (outputParse){
+                conllLine = "1\ttoken\tlemma\t..."; // a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
+                context.write(new Text("CoNLL\t" + conllLine), ONE);
             }
 
             context.progress();
