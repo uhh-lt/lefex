@@ -3,6 +3,7 @@ package de.tudarmstadt.lt.jst.ExtractTermFeatureScores;
 import java.net.URI;
 import java.util.Arrays;
 import de.tudarmstadt.lt.jst.Utils.MultiOutputIntSumReducer;
+import de.tudarmstadt.lt.jst.Utils.NothingReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -30,6 +31,7 @@ public class HadoopMain extends Configured implements Tool {
 		job.setJarByClass(HadoopMain.class);
 		FileInputFormat.addInputPath(job, new Path(inDir));
 		FileOutputFormat.setOutputPath(job, new Path(outDir));
+
 		job.setMapperClass(HadoopMap.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(IntWritable.class);
@@ -45,7 +47,6 @@ public class HadoopMain extends Configured implements Tool {
 		MultipleOutputs.addNamedOutput(job, "CoocWF", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "F", TextOutputFormat.class, Text.class, IntWritable.class);
 		MultipleOutputs.addNamedOutput(job, "WF", TextOutputFormat.class, Text.class, IntWritable.class);
-		MultipleOutputs.addNamedOutput(job, "CoNLL", TextOutputFormat.class, Text.class, IntWritable.class);
 
 		String[] mwePaths = conf.getStrings("holing.mwe.vocabulary", "");
 		String mwePath = "";

@@ -61,7 +61,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     String depParserType;
     boolean useDependencyTypeStoplist;
     boolean outputPos;
-    boolean outputParse;
 
 	@Override
 	public void setup(Context context) throws IOException {
@@ -72,7 +71,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
         log.info("Verbose: " + verbose);
 
         String mwePath = "";
-        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) mwePath = new File("./mwe_voc").getAbsolutePath();
+        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) mwePath = new File("mwe_voc").getAbsolutePath();
         log.info("MWE vocabulary: " + mwePath);
         mweByDicionary = !mwePath.equals("");
 
@@ -105,9 +104,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
 
         outputPos = context.getConfiguration().getBoolean("holing.output_pos", true);
         log.info("Output part-of-speech tags: " + outputPos);
-
-        outputParse = context.getConfiguration().getBoolean("output.conll_parse", false);
-        log.info("Output CoNLL parse: " + outputParse);
 
         try {
 			segmenter = AnalysisEngineFactory.createEngine(StanfordSegmenter.class);
@@ -286,6 +282,7 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     {
         Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence);
         Collection<Dependency> depsCollapsed = Format.collapseDependencies(jCas, deps, tokens);
+
         for (Dependency dep : depsCollapsed) {
             // Get dependency
             Token governor = dep.getGovernor();
@@ -320,11 +317,6 @@ class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
             } else {
                 if (!governorNgram.equals("")) context.write(new Text("WF\t" + governorNgram + "\t" + bim), ONE);
                 if (!dependantNgram.equals("")) context.write(new Text("WF\t" + dependantNgram + "\t" + ibim), ONE);
-            }
-
-            if (outputParse){
-                conllLine = "1\ttoken\tlemma\t..."; // a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
-                context.write(new Text("CoNLL\t" + conllLine), ONE);
             }
 
             context.progress();

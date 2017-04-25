@@ -10,8 +10,10 @@ import java.io.IOException;
 import java.util.*;
 import de.tudarmstadt.lt.jst.Utils.Resources;
 import static org.junit.Assert.*;
-
+import de.tudarmstadt.lt.jst.TestPaths;
 public class HadoopTest {
+
+    TestPaths _paths = new TestPaths();
 
     private void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
         HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs,
@@ -299,7 +301,7 @@ public class HadoopTest {
 
     @Test
     public void testTrigramWithCoocsBigEachTenth() throws Exception {
-        String inputPath = getTestCorpusPath();
+        String inputPath = .getTestCorpusPath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));
         System.out.println("Input text: " + inputPath);
@@ -314,18 +316,6 @@ public class HadoopTest {
 
         ToolRunner.run(conf, new HadoopMain(), new String[]{
                 inputPath, outputDir, "true"});
-    }
-
-    private String getTestCorpusPath() {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        return file.getAbsolutePath();
-    }
-
-    private String getNerTestCorpusPath() {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ner-error-text.txt").getFile());
-        return file.getAbsolutePath();
     }
 
 
@@ -394,25 +384,5 @@ public class HadoopTest {
         assertTrue("Some features are missing in the file.", expectedFeatures.size() == 0); // all expected features are found
     }
 
-    private class TestPaths {
-        public TestPaths(String corpusType) throws IOException {
-            if (corpusType.equals("ner")) inputPath = getNerTestCorpusPath();
-            else inputPath = getTestCorpusPath();
-            outputDir = inputPath + "-out";
-            FileUtils.deleteDirectory(new File(outputDir));
-            System.out.println("Input text: " + inputPath);
-            System.out.println("Output directory: "+  outputDir);
-        }
 
-        private String inputPath;
-        private String outputDir;
-
-        public String getInputPath() {
-            return inputPath;
-        }
-
-        public String getOutputDir() {
-            return outputDir;
-        }
-    }
 }

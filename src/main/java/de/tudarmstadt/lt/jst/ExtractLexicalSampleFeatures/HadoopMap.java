@@ -27,7 +27,7 @@ import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 
-public class ExtractLexicalSampleFeaturesMap extends Mapper<LongWritable, Text, Text, IntWritable> {
+public class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     static final IntWritable ONE = new IntWritable(1);
 
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");

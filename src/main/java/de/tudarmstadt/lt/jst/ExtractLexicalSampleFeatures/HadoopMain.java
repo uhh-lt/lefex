@@ -14,7 +14,7 @@ import org.apache.hadoop.util.ToolRunner;
 import java.util.Arrays;
 
 
-public class ExractLexicalSampleFeatures extends Configured implements Tool {
+public class HadoopMain extends Configured implements Tool {
 
     public boolean runJob(String inDir, String outDir) throws Exception {
         Configuration conf = getConf();
@@ -29,10 +29,10 @@ public class ExractLexicalSampleFeatures extends Configured implements Tool {
         conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
         Job job = Job.getInstance(conf);
 
-        job.setJarByClass(ExractLexicalSampleFeatures.class);
+        job.setJarByClass(HadoopMain.class);
         FileInputFormat.addInputPath(job, new Path(inDir));
         FileOutputFormat.setOutputPath(job, new Path(_outDir));
-        job.setMapperClass(ExtractLexicalSampleFeaturesMap.class);
+        job.setMapperClass(HadoopMap.class);
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(IntWritable.class);
         job.setOutputKeyClass(Text.class);
@@ -64,7 +64,7 @@ public class ExractLexicalSampleFeatures extends Configured implements Tool {
 
     public static void main(final String[] args) throws Exception {
         Configuration conf = new Configuration();
-        int res = ToolRunner.run(conf, new ExractLexicalSampleFeatures(), args);
+        int res = ToolRunner.run(conf, new HadoopMain(), args);
         System.exit(res);
     }
 }

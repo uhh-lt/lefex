@@ -9,7 +9,7 @@ import java.io.File;
 import static org.junit.Assert.*;
 
 
-public class ExtractLexicalSamplesFeaturesTest {
+public class HadoopTest {
     /*
     * The test is used as an example of class usage without any checks.
     * */
@@ -23,7 +23,7 @@ public class ExtractLexicalSamplesFeaturesTest {
 
         // Action
         Configuration conf = new Configuration();
-        ToolRunner.run(conf, new ExractLexicalSampleFeatures(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
         assertTrue("OK.", true);
     }
 
@@ -35,7 +35,7 @@ public class ExtractLexicalSamplesFeaturesTest {
         System.out.println("Output: " +  outputDir);
 
         // Action
-        ToolRunner.run(conf, new ExractLexicalSampleFeatures(), new String[]{inputPath, outputDir});
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
         assertTrue("OK.", true);
     }
 
