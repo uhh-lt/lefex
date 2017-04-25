@@ -1,5 +1,6 @@
 package de.tudarmstadt.lt.jst.CoNLL;
 
+import de.tudarmstadt.lt.jst.TestPaths;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -13,56 +14,35 @@ import static org.junit.Assert.*;
 
 
 public class HadoopTest {
-    private void run(String inputPath, Configuration conf, Integer expectedLines) throws Exception {
-        // Initialization
-        String outputDir = inputPath + "-out";
-        FileUtils.deleteDirectory(new File(outputDir));
-        System.out.println("Input: " + inputPath);
-        System.out.println("Output: " +  outputDir);
+    private void run(Configuration conf, long expectedLines) throws Exception {
+        TestPaths paths = new TestPaths("standard");
+        FileUtils.deleteDirectory(new File(paths.getOutputDir()));
+        ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir()});
 
-        // Action
-        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputDir});
-        assertTrue("OK.", true);
-
-        de.tudarmstadt.lt.jst.ExtractTermFeatureScores.HadoopTest.TestPaths paths = new de.tudarmstadt.lt.jst.ExtractTermFeatureScores.HadoopTest.TestPaths("");
-
-        String WFPath = (new File(paths.getOutputDir(), "WF-r-00000.gz")).getAbsolutePath();
-        List<String> lines = Format.readGzipAsList(WFPath);
-        assertEquals("Number of lines in WF file is wrong.", expectedLengthWF, lines.size());
-
+        String outputPath = (new File(paths.getOutputDir(), "part-m-00000")).getAbsolutePath();
+        List<String> lines = Format.readAsList(outputPath);
+        assertEquals("Number of lines in the output file is wrong.", expectedLines, lines.size());
     }
 
-    private void run(String inputPath) throws Exception {
-        run(inputPath, new Configuration(), -1);
-    }
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
-        run(inputPath);
+        run(new Configuration(), 390);
     }
 
     @Test
     public void testNoCollapsingDefault() throws Exception {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
         Configuration conf = new Configuration();
         conf.setBoolean("collapsing", false);
-        run(inputPath, conf);
+        run(conf, 420);
     }
 
     @Test
     public void testNoCollapsingMalt() throws Exception {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
-        String inputPath = file.getAbsolutePath();
         Configuration conf = new Configuration();
         conf.setBoolean("collapsing", false);
         conf.setStrings("parserName", "malt");
-        run(inputPath, conf);
+        run(conf, 420);
     }
 }
 

@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class TestPaths {
+    public TestPaths() { }
+
     public TestPaths(String corpusType) {
         try {
             if (corpusType.equals("ner")) inputPath = getNerTestCorpusPath();

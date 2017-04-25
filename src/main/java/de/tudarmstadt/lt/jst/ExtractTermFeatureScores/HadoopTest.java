@@ -13,8 +13,6 @@ import static org.junit.Assert.*;
 import de.tudarmstadt.lt.jst.TestPaths;
 public class HadoopTest {
 
-    TestPaths _paths = new TestPaths();
-
     private void runDependencyHoling(boolean selfFeatures, boolean mwe, boolean ner, int expectedLengthWF,
         HashMap<String, List<String>> expectedWFPairs, HashMap<String, List<String>> unexpectedWFPairs,
         String depParser) throws Exception
@@ -301,7 +299,7 @@ public class HadoopTest {
 
     @Test
     public void testTrigramWithCoocsBigEachTenth() throws Exception {
-        String inputPath = .getTestCorpusPath();
+        String inputPath = (new TestPaths()).getTestCorpusPath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));
         System.out.println("Input text: " + inputPath);

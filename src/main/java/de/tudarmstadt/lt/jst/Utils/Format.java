@@ -155,6 +155,19 @@ public class Format {
         }
     }
 
+    public static List<String> readAsList(String filePath) throws IOException {
+        InputStream fileStream = new FileInputStream(filePath);
+        Reader decoder = new InputStreamReader(fileStream, Charset.forName("UTF-8"));
+        BufferedReader br = new BufferedReader(decoder);
+
+        String line;
+        List<String> res = new LinkedList<>();
+        while ((line = br.readLine()) != null) {
+            res.add(line);
+        }
+        return res;
+    }
+
     public static List<String> readGzipAsList(String gzipPath) throws IOException {
         InputStream fileStream = new FileInputStream(gzipPath);
         InputStream gzipStream = new GZIPInputStream(fileStream);
