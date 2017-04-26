@@ -1,13 +1,16 @@
 package de.tudarmstadt.lt.jst.CoNLL;
 
+import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 import de.tudarmstadt.lt.jst.Utils.Format;
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.maltparser.MaltParser;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
-import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordSegmenter;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -20,9 +23,12 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.CasCreationUtils;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeMap;
 
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
@@ -33,23 +39,30 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     AnalysisEngine posTagger;
     AnalysisEngine lemmatizer;
     AnalysisEngine parser;
+    AnalysisEngine dictTagger;
+    AnalysisEngine nerEngine;
+
     JCas jCas;
     boolean collapsing;
     String parserName;
 
+
     @Override
-    public void setup(Context context) {
+    public void setup(Context context) throws IOException {
         parserName = context.getConfiguration().getStrings("parserName", "malt")[0];
         log.info("Parser: " + parserName);
 
         collapsing = context.getConfiguration().getBoolean("collapsing", true);
         log.info("Collapse dependencies: " + collapsing);
 
+        String mwePath = "";
+        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) mwePath = new File("mwe_voc").getAbsolutePath();
+        log.info("MWE vocabulary: " + mwePath);
+
         try {
-            segmenter = AnalysisEngineFactory.createEngine(OpenNlpSegmenter.class);
+            segmenter = AnalysisEngineFactory.createEngine(StanfordSegmenter.class);
             posTagger = AnalysisEngineFactory.createEngine(OpenNlpPosTagger.class);
             lemmatizer = AnalysisEngineFactory.createEngine(StanfordLemmatizer.class);
-
             if (parserName.toLowerCase().contains("malt")) {
                 synchronized (MaltParser.class) {
                     parser = AnalysisEngineFactory.createEngine(MaltParser.class);
@@ -64,6 +77,14 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                     parser = AnalysisEngineFactory.createEngine(MaltParser.class);
                 }
             }
+            dictTagger = AnalysisEngineFactory.createEngine(DictionaryAnnotator.class,
+                    DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
+                    DictionaryAnnotator.PARAM_MODEL_LOCATION, mwePath,
+                    DictionaryAnnotator.PARAM_EXTENDED_MATCH, "true");
+
+            nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,
+                    StanfordNamedEntityRecognizer.PARAM_LANGUAGE, "en",
+                    StanfordNamedEntityRecognizer.PARAM_VARIANT, "all.3class.distsim.crf");
 
             jCas = CasCreationUtils.createCas(createTypeSystemDescription(), null, null).getJCas();
         } catch (ResourceInitializationException e) {
@@ -71,6 +92,32 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
         } catch (CASException e) {
             log.error("Couldn't create new CAS", e);
         }
+    }
+
+    public static String getShortName(String dkproType){
+        if (dkproType.length() > 0){
+            String [] fields = dkproType.split("\\.");
+            if (fields.length > 0){
+                return fields[fields.length-1];
+            } else {
+                return dkproType;
+            }
+        } else {
+            return dkproType;
+        }
+    }
+
+    private String getBIO(List<NamedEntity> ngrams, int beginToken, int endToken){
+        for (NamedEntity ngram : ngrams){
+            if (ngram.getBegin() == beginToken) {
+                return "B-" + getShortName(ngram.getType().getName());
+            } else if (ngram.getBegin() < beginToken && ngram.getEnd() >= endToken) {
+                return "I-" + getShortName(ngram.getType().getName());
+            } else {
+                return "O";
+            }
+        }
+        return "O";
     }
 
     @Override
@@ -82,6 +129,8 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             segmenter.process(jCas);
             posTagger.process(jCas);
             lemmatizer.process(jCas);
+            dictTagger.process(jCas);
+            nerEngine.process(jCas);
             parser.process(jCas);
 
             // For each dependency output a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
@@ -92,6 +141,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
                 HashMap<String, Integer> tokenToID = collectionToMap(tokens);
+                List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
 
                 context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
                 context.write(new Text("-1\t" + sentence.getCoveredText()), NullWritable.get());
@@ -101,6 +151,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 TreeMap<Integer, String> conllLines = new TreeMap<>();
                 for (Dependency dep : deps) {
                     Integer id = tokenToID.getOrDefault(dep.getDependent().getCoveredText(), -2);
+                    String BIO = getBIO(ngrams, dep.getBegin(), dep.getEnd());
                     String conllLine = String.format("%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s",
                             dep.getDependent().getCoveredText(),
                             dep.getDependent().getLemma() != null ? dep.getDependent().getLemma().getValue() : "",
@@ -110,7 +161,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                             tokenToID.getOrDefault(dep.getGovernor().getCoveredText(), -2),
                             dep.getDependencyType(),
                             "_",
-                            "I"
+                            BIO
                     );
                     conllLines.put(id, conllLine);
                 }

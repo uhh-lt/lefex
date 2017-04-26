@@ -10,13 +10,15 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+
+import java.net.URI;
 import java.util.Arrays;
 
 public class HadoopMain extends Configured implements Tool {
+
     public boolean runJob(String inDir, String outDir) throws Exception {
         Configuration conf = getConf();
         conf.setBoolean("mapred.output.compress", false);
-        conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
         Job job = Job.getInstance(conf);
         job.setJarByClass(HadoopMain.class);
         FileInputFormat.addInputPath(job, new Path(inDir));
@@ -28,6 +30,12 @@ public class HadoopMain extends Configured implements Tool {
         job.setOutputValueClass(NullWritable.class);
         job.setNumReduceTasks(0);
         job.setJobName("lefex: CoNLL");
+
+        String[] mwePaths = conf.getStrings("mweVocabulary", "");
+        if (mwePaths != null && mwePaths.length > 0 && mwePaths[0] != null && !mwePaths[0].equals("")) {
+            job.addCacheFile(new URI(mwePaths[0] + "#mwe_voc"));
+        }
+
         return job.waitForCompletion(true);
     }
 

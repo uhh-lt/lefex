@@ -2,6 +2,7 @@ package de.tudarmstadt.lt.jst.CoNLL;
 
 import de.tudarmstadt.lt.jst.TestPaths;
 import de.tudarmstadt.lt.jst.Utils.Format;
+import de.tudarmstadt.lt.jst.Utils.Resources;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
@@ -27,14 +28,14 @@ public class HadoopTest {
 
     @Test
     public void testDefaultConfiguration() throws Exception {
-        run(new Configuration(), 390);
+        run(new Configuration(), 389);
     }
 
     @Test
     public void testNoCollapsingDefault() throws Exception {
         Configuration conf = new Configuration();
         conf.setBoolean("collapsing", false);
-        run(conf, 420);
+        run(conf, 419);
     }
 
     @Test
@@ -42,7 +43,41 @@ public class HadoopTest {
         Configuration conf = new Configuration();
         conf.setBoolean("collapsing", false);
         conf.setStrings("parserName", "malt");
-        run(conf, 420);
+        run(conf, 419);
     }
+
+    @Test
+    public void testNoCollapsingMaltVoc() throws Exception {
+        Configuration conf = new Configuration();
+        conf.setBoolean("collapsing", false);
+        conf.setStrings("parserName", "malt");
+        conf.setStrings("mweVocabulary",
+                Resources.getJarResourcePath("data/voc-sample.csv"));
+        run(conf, 419);
+    }
+
+    @Test
+    public void testTypeSpllitting(){
+        String r = de.tudarmstadt.lt.jst.CoNLL.HadoopMap.getShortName(
+                "de.tudarmstadt.ukp.dkpro.core.api.ner.type.Person");
+        assertEquals(r, "Person");
+
+        r = de.tudarmstadt.lt.jst.CoNLL.HadoopMap.getShortName(
+                "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity");
+        assertEquals(r, "NamedEntity");
+
+        r = de.tudarmstadt.lt.jst.CoNLL.HadoopMap.getShortName(
+                "NamedEntity");
+        assertEquals(r, "NamedEntity");
+
+        r = de.tudarmstadt.lt.jst.CoNLL.HadoopMap.getShortName(
+                "");
+        assertEquals(r, "");
+
+        r = de.tudarmstadt.lt.jst.CoNLL.HadoopMap.getShortName(
+                "NamedEntityafkjaskljfaklsjfklasjf");
+        assertEquals(r, "NamedEntityafkjaskljfaklsjfklasjf");
+    }
+
 }
 
