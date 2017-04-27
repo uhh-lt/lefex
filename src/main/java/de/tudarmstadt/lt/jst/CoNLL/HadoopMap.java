@@ -1,6 +1,5 @@
 package de.tudarmstadt.lt.jst.CoNLL;
 
-import de.tudarmstadt.lt.jst.Utils.DictionaryAnnotator;
 import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
@@ -23,14 +22,11 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.CasCreationUtils;
-
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
-
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
@@ -39,13 +35,10 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     AnalysisEngine posTagger;
     AnalysisEngine lemmatizer;
     AnalysisEngine parser;
-    AnalysisEngine dictTagger;
     AnalysisEngine nerEngine;
-
     JCas jCas;
     boolean collapsing;
     String parserName;
-
 
     @Override
     public void setup(Context context) throws IOException {
@@ -54,10 +47,6 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
 
         collapsing = context.getConfiguration().getBoolean("collapsing", true);
         log.info("Collapse dependencies: " + collapsing);
-
-        String mwePath = "";
-        if(context.getCacheFiles() != null && context.getCacheFiles().length > 0) mwePath = new File("mwe_voc").getAbsolutePath();
-        log.info("MWE vocabulary: " + mwePath);
 
         try {
             segmenter = AnalysisEngineFactory.createEngine(StanfordSegmenter.class);
@@ -77,10 +66,6 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                     parser = AnalysisEngineFactory.createEngine(MaltParser.class);
                 }
             }
-            dictTagger = AnalysisEngineFactory.createEngine(DictionaryAnnotator.class,
-                    DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
-                    DictionaryAnnotator.PARAM_MODEL_LOCATION, mwePath,
-                    DictionaryAnnotator.PARAM_EXTENDED_MATCH, "true");
 
             nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,
                     StanfordNamedEntityRecognizer.PARAM_LANGUAGE, "en",
@@ -129,7 +114,6 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             segmenter.process(jCas);
             posTagger.process(jCas);
             lemmatizer.process(jCas);
-            dictTagger.process(jCas);
             nerEngine.process(jCas);
             parser.process(jCas);
 

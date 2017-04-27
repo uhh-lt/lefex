@@ -51,8 +51,6 @@ public class HadoopTest {
         Configuration conf = new Configuration();
         conf.setBoolean("collapsing", false);
         conf.setStrings("parserName", "malt");
-        conf.setStrings("mweVocabulary",
-                Resources.getJarResourcePath("data/voc-sample.csv"));
         run(conf, 419);
     }
 
