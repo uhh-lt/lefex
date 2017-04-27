@@ -106,6 +106,12 @@
             <version>20150420.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+            <artifactId>de.tudarmstadt.ukp.dkpro.core.stanfordnlp-model-parser-en-pcfg</artifactId>
+            <version>20150129.1</version>
+        </dependency>
+
         <!-- DKPro end -->
     </dependencies>
 

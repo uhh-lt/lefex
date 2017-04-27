@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
+import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
 public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
@@ -57,10 +58,11 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                     parser = AnalysisEngineFactory.createEngine(MaltParser.class);
                 }
             }
-            // Not implemented
-            //else if (parserName.toLowerCase().contains("standord")) {
-            //    // Initialize the stanford parser
-            //}
+            else if (parserName.toLowerCase().contains("stanford")) {
+                parser = AnalysisEngineFactory.createEngine(StanfordParser.class,
+                        StanfordParser.PARAM_VARIANT, "pcfg",
+                        StanfordParser.PARAM_LANGUAGE, "en");
+            }
             else {
                 synchronized (MaltParser.class) {
                     parser = AnalysisEngineFactory.createEngine(MaltParser.class);

@@ -10,15 +10,14 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
 import java.net.URI;
 import java.util.Arrays;
 
 public class HadoopMain extends Configured implements Tool {
 
-    public boolean runJob(String inDir, String outDir) throws Exception {
+    public boolean runJob(String inDir, String outDir, boolean compress) throws Exception {
         Configuration conf = getConf();
-        conf.setBoolean("mapred.output.compress", true);
+        conf.setBoolean("mapred.output.compress", compress);
         conf.set("mapred.output.compression.codec", "org.apache.hadoop.io.compress.GzipCodec");
         Job job = Job.getInstance(conf);
         job.setJarByClass(HadoopMain.class);
@@ -43,15 +42,17 @@ public class HadoopMain extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
         System.out.println("args:" + Arrays.asList(args));
-        if (args.length != 2) {
-            System.out.println("Usage: <input-corpus> <output-conll-corpus>");
+        if (args.length != 3) {
+            System.out.println("Usage: <input-corpus> <output-conll-corpus> <compress-output>");
             System.out.println("<input-corpus>\tA text corpus to parse.");
             System.out.println("<output-conll-corpus>\tA csv file with the dependency-parsed corpus in the CoNLL format.");
+            System.out.println("<compress-output>\tCompress the output files: 'true' or 'false'.");
             System.exit(1);
         }
         String inDir = args[0];
         String outDir = args[1];
-        boolean success = runJob(inDir, outDir);
+        boolean compress = Boolean.parseBoolean(args[2]);
+        boolean success = runJob(inDir, outDir, compress);
         return success ? 0 : 1;
     }
 
