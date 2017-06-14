@@ -43,7 +43,7 @@ public class HadoopMain extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         System.out.println("args:" + Arrays.asList(args));
         if (args.length != 3) {
-            System.out.println("Usage: <input-corpus> <output-conll-corpus> <compress-output>");
+            System.out.println("Usage: <input-corpus> <output-conll-corpus> <compress-output> <input-format>");
             System.out.println("<input-corpus>\tA text corpus to parse.");
             System.out.println("<output-conll-corpus>\tA csv file with the dependency-parsed corpus in the CoNLL format.");
             System.out.println("<compress-output>\tCompress the output files: 'true' or 'false'.");
