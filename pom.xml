@@ -37,13 +37,13 @@
            git clone https://github.com/tudarmstadt-lt/jbt-jars.git to src/main/resources/
            and running the install-jar-locally.sh script inside this repository
          -->
-        <!--<dependency>-->
-            <!--<groupId>jobimtext</groupId>-->
-            <!--<artifactId>org.jobimtext.collapsing</artifactId>-->
-            <!--<version>0.0.1</version>-->
-            <!--<scope>system</scope>-->
-            <!--<systemPath>${project.basedir}/src/main/resources/jbt-jars/org.jobimtext.collapsing.jar</systemPath>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>jobimtext</groupId>
+            <artifactId>org.jobimtext.collapsing</artifactId>
+            <version>0.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/jbt-jars/org.jobimtext.collapsing.jar</systemPath>
+        </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>
