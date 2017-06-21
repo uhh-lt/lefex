@@ -183,10 +183,11 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             // 5 books book NOUN NNS Number=Plur 2 dobj 4:dobj SpaceAfter=No
 
             if (inputType.equals(DOCUMENT)){
-                context.write(new Text("<<<<<<<<<<\t" + url + "\t" + s3), NullWritable.get());
+                context.write(new Text("# newdoc\turl = " + url + "\ts3 = " + s3), NullWritable.get());
                 context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_DOCUMENTS").increment(1);
             }
 
+            int sentenceId = 1;
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
                 if (tokens.size() > maxSentenceSizeTokens) {
@@ -194,16 +195,16 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                     continue;
                 }
 
-                context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
-                HashMap<String, Integer> tokenToID = collectionToMap(tokens);
+                HashMap<Token, Integer> tokenToID = collectionToMap(tokens);
                 List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
-                context.write(new Text(">>>>>\t" + sentence.getCoveredText()), NullWritable.get());
+                context.write(new Text("# sent_id = " + url + "#" + sentenceId), NullWritable.get());
+                context.write(new Text("# text = " + sentence.getCoveredText()), NullWritable.get());
                 Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
                 if (collapsing) deps = Format.collapseDependencies(jCas, deps, tokens);
 
                 TreeMap<Integer, String> conllLines = new TreeMap<>();
                 for (Dependency dep : deps) {
-                    Integer id = tokenToID.getOrDefault(dep.getDependent().getCoveredText(), -2);
+                    Integer id = tokenToID.getOrDefault(dep.getDependent(), -2);
                     String BIO = getBIO(ngrams, dep.getBegin(), dep.getEnd());
                     String conllLine = String.format("%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s",
                             dep.getDependent().getCoveredText(),
@@ -211,7 +212,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                             dep.getDependent().getPos() != null ? dep.getDependent().getPos().getPosValue() : "",
                             dep.getDependent().getPos() != null ? dep.getDependent().getPos().getPosValue() : "",
                             dep.getDependent().getMorph() != null ? dep.getDependent().getMorph().getValue() : "",
-                            tokenToID.getOrDefault(dep.getGovernor().getCoveredText(), -2),
+                            tokenToID.getOrDefault(dep.getGovernor(), -2),
                             dep.getDependencyType(),
                             "_",
                             BIO
@@ -223,6 +224,9 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                     String res = String.format("%d\t%s", id, conllLines.get(id));
                     context.write(new Text(res), NullWritable.get());
                 }
+
+                context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
+                sentenceId += 1;
             }
         } catch(Exception e){
             log.error("Can't process line: " + line.toString(), e);
@@ -230,11 +234,11 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
         }
     }
 
-    private HashMap<String, Integer> collectionToMap(Collection<Token> tokens){
-        HashMap<String,Integer> token2id = new HashMap<>();
+    private HashMap<Token, Integer> collectionToMap(Collection<Token> tokens){
+        HashMap<Token,Integer> token2id = new HashMap<>();
         Integer id = 0;
         for (Token t : tokens){
-            token2id.put(t.getCoveredText(), id);
+            token2id.put(t, id);
             id++;
         }
         return token2id;

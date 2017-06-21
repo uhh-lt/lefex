@@ -40,6 +40,19 @@ public class HadoopTest {
     }
 
     @Test
+    public void collapsingTest() throws Exception {
+        String inputPath = "/Users/sasha/Desktop/frames/the.txt";
+        String outputPath = "/Users/sasha/Desktop/frames/the-output";
+        FileUtils.deleteDirectory(new File(outputPath));
+
+        Configuration conf = new Configuration();
+        conf.setBoolean("collapsing", true);
+        conf.setStrings("parserName", "malt");
+        conf.setStrings("inputType", "sentence");
+        ToolRunner.run(conf, new HadoopMain(), new String[]{inputPath, outputPath, "false"});
+    }
+
+    @Test
     public void testDefaultConfiguration() throws Exception {
         run(new Configuration(), 389);
     }
