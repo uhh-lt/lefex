@@ -185,7 +185,6 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             lemmatizer.process(jCas);
             nerEngine.process(jCas);
             parser.process(jCas);
-            if (collapsing) collapser.process(jCas);
 
             // For each dependency output a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
             // IN_ID TOKEN LEMMA POS_COARSE POS_FULL MORPH ID_OUT TYPE _ NE_BIO
@@ -210,13 +209,13 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 context.write(new Text("# sent_id = " + url + "#" + sentenceId), NullWritable.get());
                 context.write(new Text("# text = " + sentence.getCoveredText()), NullWritable.get());
                 Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
-                //if (collapsing) deps = Format.collapseDependencies(jCas, deps, tokens);
 
-                TreeMap<Integer, String> conllLines = new TreeMap<>();
+
+                TreeMap<Integer, Line> conllLines = new TreeMap<>();
                 for (Dependency dep : deps) {
-                    Integer id = tokenToID.getOrDefault(dep.getDependent(), -2);
-                    String BIO = getBIO(ngrams, dep.getBegin(), dep.getEnd());
-                    String conllLine = String.format("%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s",
+                    Integer idSrc = tokenToID.getOrDefault(dep.getDependent(), -2);
+                    Line l  = new Line(
+                            idSrc,
                             dep.getDependent().getCoveredText(),
                             dep.getDependent().getLemma() != null ? dep.getDependent().getLemma().getValue() : "",
                             dep.getDependent().getPos() != null ? dep.getDependent().getPos().getPosValue() : "",
@@ -225,19 +224,26 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                             tokenToID.getOrDefault(dep.getGovernor(), -2),
                             dep.getDependencyType(),
                             "_",
-                            BIO
+                            getBIO(ngrams, dep.getBegin(), dep.getEnd())
                     );
-                    conllLines.put(id, conllLine);
+                    conllLines.put(idSrc, l);
                 }
-
+                if (collapsing) collapser.process(jCas);
 
                 // Gather the collapsed dependencies
                 for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
-                    //System.out.println(dep.getDependencyType() + "(" + dep.getDependent().getCoveredText() + ", " + dep.getGovernor().getCoveredText() + ")");
+                    Integer idSrc = tokenToID.getOrDefault(dep.getDependent(), -2);
+                    Line l = conllLines.getOrDefault(idSrc, null);
+                    if (idSrc != -2 && line != null){
+                        l.enhancedDepType = dep.getDependencyType();
+                        conllLines.put(idSrc, l);
+                    } else {
+                        System.out.println("Warning: token not found in the collapsed deps.:" + dep);
+                    }
                 }
 
                 for (Integer id : conllLines.keySet()) {
-                    String res = String.format("%d\t%s", id, conllLines.get(id));
+                    String res = String.format("%d\t%s", id, conllLines.get(id).getTextNoId());
                     context.write(new Text(res), NullWritable.get());
                 }
 
