@@ -29,8 +29,8 @@ public class HadoopTest {
     @Test
     public void documentInputFile() throws Exception {
         // /Users/sasha/work/active/joint
-        String inputPath = "/Users/panchenko/work/JoSimText/target/scala-2.11/test-classes/cc-test.warc.gz-output";
-        String outputPath = "/Users/panchenko/work/JoSimText/target/scala-2.11/test-classes/cc-test.warc.gz-output-conll";
+        String inputPath = "/Users/sasha/work/active/joint/JoSimText/target/scala-2.11/test-classes/cc-test.warc.gz-output";
+        String outputPath = "/Users/sasha/work/active/joint/JoSimText/target/scala-2.11/test-classes/cc-test.warc.gz-output-conll";
         FileUtils.deleteDirectory(new File(outputPath));
 
         Configuration conf = new Configuration();

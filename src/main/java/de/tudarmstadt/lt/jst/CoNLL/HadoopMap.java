@@ -91,7 +91,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 collapser = AnalysisEngineFactory.createEngine(
                         CollapsedDependenciesAnnotator.class,
                         CollapsedDependenciesAnnotator.RULE_MANAGER,
-                        "/resources/jbt-jars/collapsing_rules_english_cc.txt");
+                        getClass().getClassLoader().getResource("data/collapsing_rules_english_cc.txt").getPath());
             }
 
             nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,
@@ -185,6 +185,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             lemmatizer.process(jCas);
             nerEngine.process(jCas);
             parser.process(jCas);
+            if (collapsing) collapser.process(jCas);
 
             // For each dependency output a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
             // IN_ID TOKEN LEMMA POS_COARSE POS_FULL MORPH ID_OUT TYPE _ NE_BIO
@@ -209,7 +210,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 context.write(new Text("# sent_id = " + url + "#" + sentenceId), NullWritable.get());
                 context.write(new Text("# text = " + sentence.getCoveredText()), NullWritable.get());
                 Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
-                if (collapsing) deps = Format.collapseDependencies(jCas, deps, tokens);
+                //if (collapsing) deps = Format.collapseDependencies(jCas, deps, tokens);
 
                 TreeMap<Integer, String> conllLines = new TreeMap<>();
                 for (Dependency dep : deps) {
@@ -227,6 +228,12 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                             BIO
                     );
                     conllLines.put(id, conllLine);
+                }
+
+
+                // Gather the collapsed dependencies
+                for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
+                    //System.out.println(dep.getDependencyType() + "(" + dep.getDependent().getCoveredText() + ", " + dep.getGovernor().getCoveredText() + ")");
                 }
 
                 for (Integer id : conllLines.keySet()) {
