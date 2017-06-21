@@ -32,6 +32,8 @@ import org.jsoup.Jsoup;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
+import org.jobimtext.collapsing.annotator.CollapsedDependenciesAnnotator;
+import org.jobimtext.collapsing.type.NewCollapsedDependency;
 
 
 public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
@@ -40,6 +42,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     AnalysisEngine posTagger;
     AnalysisEngine lemmatizer;
     AnalysisEngine parser;
+    AnalysisEngine collapser;
     AnalysisEngine nerEngine;
     JCas jCas;
     boolean collapsing;
@@ -83,6 +86,12 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 synchronized (MaltParser.class) {
                     parser = AnalysisEngineFactory.createEngine(MaltParser.class);
                 }
+            }
+            if (collapsing){
+                collapser = AnalysisEngineFactory.createEngine(
+                        CollapsedDependenciesAnnotator.class,
+                        CollapsedDependenciesAnnotator.RULE_MANAGER,
+                        "/resources/jbt-jars/collapsing_rules_english_cc.txt");
             }
 
             nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,

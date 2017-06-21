@@ -1,7 +1,6 @@
 package de.tudarmstadt.lt.jst;
 
 import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -11,6 +10,7 @@ public class TestPaths {
     public TestPaths(String corpusType) {
         try {
             if (corpusType.equals("ner")) inputPath = getNerTestCorpusPath();
+            else if (corpusType.equals("large")) inputPath = "/Users/panchenko/work/tmp/large-corpus.txt"; // only for local tests
             else inputPath = getTestCorpusPath();
             outputDir = inputPath + "-out";
             FileUtils.deleteDirectory(new File(outputDir));
