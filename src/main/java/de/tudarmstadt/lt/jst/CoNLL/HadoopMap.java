@@ -30,6 +30,9 @@ import java.util.TreeMap;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
+//import org.jobimtext.collapsing.annotator.CollapsedDependenciesAnnotator;
+//import org.jobimtext.collapsing.type.NewCollapsedDependency;
+
 public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
     AnalysisEngine segmenter;

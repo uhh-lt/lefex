@@ -5,7 +5,6 @@
     <artifactId>lefex</artifactId>
     <version>0.0.3</version>
 
-
     <properties>
         <dkpro.core.version>1.8.0</dkpro.core.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,6 +32,18 @@
     </repositories>
 
     <dependencies>
+
+        <!-- JoBimText dependency to be installed locally by
+           git clone https://github.com/tudarmstadt-lt/jbt-jars.git to src/main/resources/
+           and running the install-jar-locally.sh script inside this repository
+         -->
+        <!--<dependency>-->
+            <!--<groupId>jobimtext</groupId>-->
+            <!--<artifactId>org.jobimtext.collapsing</artifactId>-->
+            <!--<version>0.0.1</version>-->
+            <!--<scope>system</scope>-->
+            <!--<systemPath>${project.basedir}/src/main/resources/jbt-jars/org.jobimtext.collapsing.jar</systemPath>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>commons-io</groupId>
