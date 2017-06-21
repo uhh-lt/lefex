@@ -28,10 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordParser;
+import org.jsoup.Jsoup;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import static org.apache.uima.fit.factory.TypeSystemDescriptionFactory.createTypeSystemDescription;
 
-//import org.jobimtext.collapsing.annotator.CollapsedDependenciesAnnotator;
-//import org.jobimtext.collapsing.type.NewCollapsedDependency;
 
 public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     Logger log = Logger.getLogger("de.tudarmstadt.lt.wsi");
@@ -43,14 +44,26 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     JCas jCas;
     boolean collapsing;
     String parserName;
+    int maxSentenceSizeTokens = 110;
+    String inputType;
+    String SENTENCE = "sentence";
+    String DOCUMENT = "document";
+    Pattern urlRegex = Pattern.compile("(http://|www\\.|[a-z0-9]\\.com)");
+    Pattern htmlRegex = Pattern.compile("<[a-z ='\"/:0-9]+[^>]*>");
+    Pattern latinTextRegex = Pattern.compile("^[#±§-‒–—―©®™½¾@€£$¥&\u20BD\u00A0\u00AD%\\[\\])(（）;:,\\..?!\"'×Þß÷þøA-zÀ-ÿćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9\\s-\\t/+α-ωΑ-Ω-]+$");
+    Pattern someLettersRegex = Pattern.compile("[A-z]+");
 
     @Override
     public void setup(Context context) throws IOException {
         parserName = context.getConfiguration().getStrings("parserName", "malt")[0];
-        log.info("Parser: " + parserName);
+        log.info("Parser ('malt' or 'stanford'): " + parserName);
 
         collapsing = context.getConfiguration().getBoolean("collapsing", true);
-        log.info("Collapse dependencies: " + collapsing);
+        log.info("Collapse dependencies ('true' or 'false'): " + collapsing);
+
+        inputType = context.getConfiguration().getStrings("inputType", SENTENCE)[0].toLowerCase();
+        if (!inputType.equals(DOCUMENT) && !inputType.equals(SENTENCE)) inputType = SENTENCE;
+        log.info("Input type ('sentence' or 'document'): " + inputType);
 
         try {
             segmenter = AnalysisEngineFactory.createEngine(StanfordSegmenter.class);
@@ -84,6 +97,33 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
         }
     }
 
+    public String cleanup(String document) {
+        try {
+            document = Jsoup.parse(document.replace("   ", " . ")).text();
+            jCas.reset();
+            jCas.setDocumentText(document);
+            jCas.setDocumentLanguage("en");
+            segmenter.process(jCas);
+            StringBuilder d = new StringBuilder();
+            for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+                String s = sentence.getCoveredText();
+                Matcher urlMatch = urlRegex.matcher(s);
+                Matcher htmlMatch = urlRegex.matcher(s);
+                Matcher latinMatch = latinTextRegex.matcher(s);
+                Matcher lettersMatch = someLettersRegex.matcher(s);
+
+                if((!urlMatch.find() && !htmlMatch.find()) && (latinMatch.find() && lettersMatch.find())){
+                    d.append(sentence.getCoveredText().replaceAll("\\s+", " "));
+                    d.append(" ");
+                }
+            }
+            return d.toString();
+        } catch(Exception e){
+            log.error("Can't process document.", e);
+            return "";
+        }
+    }
+
     public static String getShortName(String dkproType){
         if (dkproType.length() > 0){
             String [] fields = dkproType.split("\\.");
@@ -113,8 +153,23 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     @Override
     public void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
         try {
+            String url = "";
+            String s3 = "";
+            String text = "";
+            if (inputType.equals(SENTENCE)){
+                text = line.toString();
+            } else {
+                String[] fields = line.toString().split("\t");
+                if (fields.length == 3){
+                    url = fields[0];
+                    s3 = fields[1];
+                    text = cleanup(fields[2]);
+                }
+                // Output a header that contains the provenance
+            }
+
             jCas.reset();
-            jCas.setDocumentText(line.toString());
+            jCas.setDocumentText(text);
             jCas.setDocumentLanguage("en");
             segmenter.process(jCas);
             posTagger.process(jCas);
@@ -127,13 +182,22 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             // An example is below. NB: the last (10th) field can be anything according to the specification (NE in our case)
             // 5 books book NOUN NNS Number=Plur 2 dobj 4:dobj SpaceAfter=No
 
+            if (inputType.equals(DOCUMENT)){
+                context.write(new Text("<<<<<<<<<<\t" + url + "\t" + s3), NullWritable.get());
+                context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_DOCUMENTS").increment(1);
+            }
+
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
-                HashMap<String, Integer> tokenToID = collectionToMap(tokens);
-                List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
+                if (tokens.size() > maxSentenceSizeTokens) {
+                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
+                    continue;
+                }
 
                 context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_SENTENCES").increment(1);
-                context.write(new Text("-1\t" + sentence.getCoveredText()), NullWritable.get());
+                HashMap<String, Integer> tokenToID = collectionToMap(tokens);
+                List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
+                context.write(new Text(">>>>>\t" + sentence.getCoveredText()), NullWritable.get());
                 Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
                 if (collapsing) deps = Format.collapseDependencies(jCas, deps, tokens);
 
