@@ -57,7 +57,10 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     Pattern someLettersRegex = Pattern.compile("[A-z]+");
 
     @Override
-    public void setup(Context context) throws IOException {
+    public void setup(Context context) throws IOException, InterruptedException {
+        context.write(new Text("# parser = MaltParser Language: English. Parser configuration: Stack. Transition system: Projective. Model: de.tudarmstadt.ukp.dkpro.core.maltparser-upstream-parser-en-linear. Model version: 20120312."), NullWritable.get());
+
+
         parserName = context.getConfiguration().getStrings("parserName", "malt")[0];
         log.info("Parser ('malt' or 'stanford'): " + parserName);
 
@@ -185,6 +188,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             lemmatizer.process(jCas);
             nerEngine.process(jCas);
             parser.process(jCas);
+            if (collapsing) collapser.process(jCas);
 
             // For each dependency output a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
             // IN_ID TOKEN LEMMA POS_COARSE POS_FULL MORPH ID_OUT TYPE _ NE_BIO
@@ -208,13 +212,21 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
                 context.write(new Text("# sent_id = " + url + "#" + sentenceId), NullWritable.get());
                 context.write(new Text("# text = " + sentence.getCoveredText()), NullWritable.get());
-                Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
 
+                HashMap<Token, String> tokenToCDep = new HashMap<>();
+                if (collapsing) {
+                    for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
+                        if (dep instanceof NewCollapsedDependency) {
+                            tokenToCDep.put(dep.getDependent(), tokenToID.getOrDefault(dep.getGovernor(), -1) + ":" + dep.getDependencyType());
+                        }
+                    }
+                }
 
                 TreeMap<Integer, Line> conllLines = new TreeMap<>();
-                for (Dependency dep : deps) {
+                for (Dependency dep : JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd())) {
+                    if (dep instanceof NewCollapsedDependency) continue;
                     Integer idSrc = tokenToID.getOrDefault(dep.getDependent(), -2);
-                    Line l  = new Line(
+                    Line l = new Line(
                             idSrc,
                             dep.getDependent().getCoveredText(),
                             dep.getDependent().getLemma() != null ? dep.getDependent().getLemma().getValue() : "",
@@ -223,23 +235,10 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                             dep.getDependent().getMorph() != null ? dep.getDependent().getMorph().getValue() : "",
                             tokenToID.getOrDefault(dep.getGovernor(), -2),
                             dep.getDependencyType(),
-                            "_",
+                            tokenToCDep.getOrDefault(dep.getDependent(),"_"),
                             getBIO(ngrams, dep.getBegin(), dep.getEnd())
                     );
                     conllLines.put(idSrc, l);
-                }
-                if (collapsing) collapser.process(jCas);
-
-                // Gather the collapsed dependencies
-                for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
-                    Integer idSrc = tokenToID.getOrDefault(dep.getDependent(), -2);
-                    Line l = conllLines.getOrDefault(idSrc, null);
-                    if (idSrc != -2 && line != null){
-                        l.enhancedDepType = dep.getDependencyType();
-                        conllLines.put(idSrc, l);
-                    } else {
-                        System.out.println("Warning: token not found in the collapsed deps.:" + dep);
-                    }
                 }
 
                 for (Integer id : conllLines.keySet()) {

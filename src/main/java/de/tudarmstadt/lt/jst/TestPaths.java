@@ -34,13 +34,13 @@ public class TestPaths {
 
     public String getTestCorpusPath() {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        File file = new File(classLoader.getResource("test/ukwac-sample-10.txt").getFile());
         return file.getAbsolutePath();
     }
 
     public String getNerTestCorpusPath() {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ner-error-text.txt").getFile());
+        File file = new File(classLoader.getResource("test/ner-error-text.txt").getFile());
         return file.getAbsolutePath();
     }
 }

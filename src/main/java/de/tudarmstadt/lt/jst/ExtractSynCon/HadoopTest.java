@@ -29,7 +29,7 @@ public class HadoopTest {
     @Test
     public void testDefaultConfiguration() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        File file = new File(classLoader.getResource("test/ukwac-sample-10.txt").getFile());
         String inputPath = file.getAbsolutePath();
         run(inputPath);
     }
