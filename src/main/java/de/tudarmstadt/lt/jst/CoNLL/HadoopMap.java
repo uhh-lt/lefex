@@ -1,6 +1,5 @@
 package de.tudarmstadt.lt.jst.CoNLL;
 
-import de.tudarmstadt.lt.jst.Utils.Format;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -186,13 +185,15 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             nerEngine.process(jCas);
             parser.process(jCas);
 
+            if (collapsing) collapser.process(jCas);
+
             // For each dependency output a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
             // IN_ID TOKEN LEMMA POS_COARSE POS_FULL MORPH ID_OUT TYPE _ NE_BIO
             // An example is below. NB: the last (10th) field can be anything according to the specification (NE in our case)
             // 5 books book NOUN NNS Number=Plur 2 dobj 4:dobj SpaceAfter=No
 
             if (inputType.equals(DOCUMENT)){
-                context.write(new Text("# newdoc\turl = " + url + "\ts3 = " + s3), NullWritable.get());
+                context.write(new Text("\n# newdoc\turl = " + url + "\ts3 = " + s3), NullWritable.get());
                 context.getCounter("de.tudarmstadt.lt.wsi", "NUM_PROCESSED_DOCUMENTS").increment(1);
             }
 
@@ -206,7 +207,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
 
                 HashMap<Token, Integer> tokenToID = collectionToMap(tokens);
                 List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
-                context.write(new Text("# sent_id = " + url + "#" + sentenceId), NullWritable.get());
+                context.write(new Text("\n# sent_id = " + url + "#" + sentenceId), NullWritable.get());
                 context.write(new Text("# text = " + sentence.getCoveredText()), NullWritable.get());
                 Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
 
@@ -228,7 +229,6 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                     );
                     conllLines.put(idSrc, l);
                 }
-                if (collapsing) collapser.process(jCas);
 
                 // Gather the collapsed dependencies
                 for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
