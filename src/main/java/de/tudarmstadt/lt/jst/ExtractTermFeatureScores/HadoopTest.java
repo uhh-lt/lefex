@@ -6,7 +6,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import de.tudarmstadt.lt.jst.Utils.Resources;
 import static org.junit.Assert.*;
@@ -34,7 +33,7 @@ public class HadoopTest {
         conf.setBoolean("holing.dependencies.semantify", true);
         conf.setBoolean("holing.nouns_only", false);
         conf.setBoolean("holing.dependencies.noun_noun_dependencies_only", false);
-        String mwePath = mwe ? Resources.getJarResourcePath("data/voc-sample.csv") : "";
+        String mwePath = mwe ? Resources.getJarResourcePath("test/voc-sample.csv") : "";
         conf.setStrings("holing.mwe.vocabulary", mwePath);
         conf.setBoolean("holing.mwe.self_features", selfFeatures);
         conf.setBoolean("holing.mwe.ner", ner);
@@ -186,7 +185,7 @@ public class HadoopTest {
         conf.setBoolean("holing.lemmatize", true);
         conf.setBoolean("holing.mwe.ner", true);
         conf.setBoolean("holing.verbose", true);
-        String mwePath = Resources.getJarResourcePath("data/voc-ner.csv");
+        String mwePath = Resources.getJarResourcePath("test/voc-ner.csv");
         conf.setStrings("holing.mwe.vocabulary", mwePath);
         ToolRunner.run(conf, new HadoopMain(), new String[]{paths.getInputPath(), paths.getOutputDir(), "true"});
 
@@ -267,7 +266,7 @@ public class HadoopTest {
 
     private void runTrigram(boolean lemmatize) throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/python-ruby-jaguar.txt").getFile());
+        File file = new File(classLoader.getResource("test/python-ruby-jaguar.txt").getFile());
         String inputPath = file.getAbsolutePath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));

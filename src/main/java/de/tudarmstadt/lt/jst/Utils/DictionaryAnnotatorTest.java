@@ -42,7 +42,7 @@ import java.util.ArrayList;
 // before merge to dkpro:
 // - remove imports below and all fix all paths to persons.txt
 // - files changed: persons.txt, DictionaryAnnotator.java, DictionaryAnnotatorTest.java
-import de.tudarmstadt.lt.jst.Utils.Resources;
+
 //import de.tudarmstadt.ukp.dkpro.core.dictionaryannotator.DictionaryAnnotator;
 
 public class DictionaryAnnotatorTest
@@ -52,7 +52,7 @@ public class DictionaryAnnotatorTest
     {
         AnalysisEngine ae = createEngine(DictionaryAnnotator.class,
                 DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
-                DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("data/persons.txt")); //"src/test/resources/persons.txt");
+                DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("test/persons.txt")); //"src/test/resources/persons.txt");
 
         JCas jcas = JCasFactory.createJCas();
         TokenBuilder<Token, Sentence> tb = new TokenBuilder<Token, Sentence>(Token.class, Sentence.class);
@@ -70,7 +70,7 @@ public class DictionaryAnnotatorTest
         AnalysisEngine ae = createEngine(DictionaryAnnotator.class,
                 DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
                 DictionaryAnnotator.PARAM_VALUE, "PERSON",
-                DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("data/persons.txt")); //"src/test/resources/persons.txt");
+                DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("test/persons.txt")); //"src/test/resources/persons.txt");
 
         JCas jcas = JCasFactory.createJCas();
         TokenBuilder<Token, Sentence> tb = new TokenBuilder<Token, Sentence>(Token.class, Sentence.class);
@@ -90,7 +90,7 @@ public class DictionaryAnnotatorTest
             AnalysisEngine ae = createEngine(DictionaryAnnotator.class,
                     DictionaryAnnotator.PARAM_ANNOTATION_TYPE, "lala",
                     DictionaryAnnotator.PARAM_VALUE, "PERSON",
-                    DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("data/persons.txt")); //"src/test/resources/persons.txt");
+                    DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("test/persons.txt")); //"src/test/resources/persons.txt");
 
             JCas jcas = JCasFactory.createJCas();
             TokenBuilder<Token, Sentence> tb = new TokenBuilder<Token, Sentence>(Token.class, Sentence.class);
@@ -112,7 +112,7 @@ public class DictionaryAnnotatorTest
                     DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NamedEntity.class,
                     DictionaryAnnotator.PARAM_VALUE_FEATURE, "lala",
                     DictionaryAnnotator.PARAM_VALUE, "PERSON",
-                    DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("data/persons.txt")); //"src/test/resources/persons.txt");
+                    DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("test/persons.txt")); //"src/test/resources/persons.txt");
 
             JCas jcas = JCasFactory.createJCas();
             TokenBuilder<Token, Sentence> tb = new TokenBuilder<Token, Sentence>(Token.class, Sentence.class);
@@ -131,7 +131,7 @@ public class DictionaryAnnotatorTest
     {
         AnalysisEngine ae = createEngine(DictionaryAnnotator.class,
                 DictionaryAnnotator.PARAM_ANNOTATION_TYPE, NGram.class,
-                DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("data/persons.txt"), //"src/test/resources/persons.txt");
+                DictionaryAnnotator.PARAM_MODEL_LOCATION, Resources.getJarResourcePath("test/persons.txt"), //"src/test/resources/persons.txt");
                 DictionaryAnnotator.PARAM_EXTENDED_MATCH, "true");
 
         JCas jcas = JCasFactory.createJCas();

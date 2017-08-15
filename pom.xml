@@ -42,7 +42,7 @@
             <artifactId>org.jobimtext.collapsing</artifactId>
             <version>0.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/jbt-jars/org.jobimtext.collapsing.jar</systemPath>
+            <systemPath>${project.basedir}/jbt-jars/org.jobimtext.collapsing.jar</systemPath>
         </dependency>
 
         <dependency>

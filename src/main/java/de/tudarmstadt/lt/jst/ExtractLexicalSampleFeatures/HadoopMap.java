@@ -40,6 +40,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     String holingType;
     boolean lemmatize;
 
+
     @Override
     public void setup(Context context) {
         holingType = context.getConfiguration().getStrings("holing.type", "dependency")[0];

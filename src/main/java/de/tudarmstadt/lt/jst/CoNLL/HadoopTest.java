@@ -2,18 +2,13 @@ package de.tudarmstadt.lt.jst.CoNLL;
 
 import de.tudarmstadt.lt.jst.TestPaths;
 import de.tudarmstadt.lt.jst.Utils.Format;
-import de.tudarmstadt.lt.jst.Utils.Resources;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import java.io.File;
 import java.util.List;
-
 import static org.junit.Assert.*;
-
 
 public class HadoopTest {
     private void run(Configuration conf, long expectedLines) throws Exception {
@@ -28,9 +23,8 @@ public class HadoopTest {
 
     @Test
     public void documentInputFile() throws Exception {
-        // /Users/sasha/work/active/joint
-        String inputPath = "/Users/sasha/work/active/joint/JoSimText/target/scala-2.11/test-classes/cc-test.warc.gz-output";
-        String outputPath = "/Users/sasha/work/active/joint/JoSimText/target/scala-2.11/test-classes/cc-test.warc.gz-output-conll";
+        String inputPath = getClass().getClassLoader().getResource("test/cc-document-html.csv").getPath();
+        String outputPath = inputPath + "-output";
         FileUtils.deleteDirectory(new File(outputPath));
 
         Configuration conf = new Configuration();

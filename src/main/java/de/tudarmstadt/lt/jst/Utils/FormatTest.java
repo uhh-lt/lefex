@@ -13,7 +13,7 @@ public class FormatTest {
     @Test
     public void readGzipAsListTest() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/simWithFeatures100.csv.gz").getFile());
+        File file = new File(classLoader.getResource("test/simWithFeatures100.csv.gz").getFile());
         String inputPath = file.getAbsolutePath();
 
         List<String> l = Format.readGzipAsList(inputPath);

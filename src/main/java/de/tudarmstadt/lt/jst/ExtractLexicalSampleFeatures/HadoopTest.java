@@ -42,7 +42,7 @@ public class HadoopTest {
     @Test
     public void testDefaultConfiguration() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/lexsample-20.csv").getFile());
+        File file = new File(classLoader.getResource("test/lexsample-20.csv").getFile());
         String inputPath = file.getAbsolutePath();
         run(inputPath);
     }
@@ -50,7 +50,7 @@ public class HadoopTest {
     @Test
     public void testPRJ() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/lexsample-prj60.csv").getFile());
+        File file = new File(classLoader.getResource("test/lexsample-prj60.csv").getFile());
         String inputPath = file.getAbsolutePath();
         run(inputPath);
     }
@@ -58,7 +58,7 @@ public class HadoopTest {
     @Test
     public void testTrigramPRJ() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/lexsample-prj60.csv").getFile());
+        File file = new File(classLoader.getResource("test/lexsample-prj60.csv").getFile());
         String inputPath = file.getAbsolutePath();
 
         Configuration conf = new Configuration();
@@ -69,7 +69,7 @@ public class HadoopTest {
     @Test
     public void testDependencyPRJ() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/lexsample-prj60.csv").getFile());
+        File file = new File(classLoader.getResource("test/lexsample-prj60.csv").getFile());
         String inputPath = file.getAbsolutePath();
 
         Configuration conf = new Configuration();
@@ -80,7 +80,7 @@ public class HadoopTest {
     @Test
     public void testDependencyAndTrigramPRJ() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/lexsample-prj60.csv").getFile());
+        File file = new File(classLoader.getResource("test/lexsample-prj60.csv").getFile());
         String inputPath = file.getAbsolutePath();
 
         Configuration conf = new Configuration();

@@ -20,7 +20,7 @@ public class HadoopTest {
     public void testRunDefault() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        File file = new File(classLoader.getResource("test/ukwac-sample-10.txt").getFile());
         String inputPath = file.getAbsolutePath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));
@@ -42,7 +42,7 @@ public class HadoopTest {
     public void testRunLemmatize() throws Exception {
         // Initialization
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10.txt").getFile());
+        File file = new File(classLoader.getResource("test/ukwac-sample-10.txt").getFile());
         String inputPath = file.getAbsolutePath();
         String outputDir = inputPath + "-out";
         FileUtils.deleteDirectory(new File(outputDir));

@@ -22,7 +22,7 @@ public class HadoopTest {
     @Test
     public void textWithHtmlTags() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/text-with-tags.txt").getFile());
+        File file = new File(classLoader.getResource("test/text-with-tags.txt").getFile());
         String inputPath = file.getAbsolutePath();
         run(inputPath, inputPath + "-out", true, 61, true);
     }
@@ -36,7 +36,7 @@ public class HadoopTest {
     @Test
     public void testDefault() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10-oneliner.txt").getFile());
+        File file = new File(classLoader.getResource("test/ukwac-sample-10-oneliner.txt").getFile());
         String inputPath = file.getAbsolutePath();
         run(inputPath, inputPath + "-out", false, 14);
     }
@@ -44,7 +44,7 @@ public class HadoopTest {
     @Test
     public void testUniq() throws Exception {
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("data/ukwac-sample-10-oneliner.txt").getFile());
+        File file = new File(classLoader.getResource("test/ukwac-sample-10-oneliner.txt").getFile());
         String inputPath = file.getAbsolutePath();
         run(inputPath, inputPath + "-out", true, 10);
     }

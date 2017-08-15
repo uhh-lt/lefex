@@ -9,6 +9,7 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordLemmatizer;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordSegmenter;
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -21,7 +22,11 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.CasCreationUtils;
-import java.io.IOException;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +51,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     JCas jCas;
     boolean collapsing;
     String parserName;
+    boolean verbose = false;
     int maxSentenceSizeTokens = 110;
     String inputType;
     String SENTENCE = "sentence";
@@ -56,7 +62,9 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     Pattern someLettersRegex = Pattern.compile("[A-z]+");
 
     @Override
-    public void setup(Context context) throws IOException {
+    public void setup(Context context) throws IOException, InterruptedException {
+        context.write(new Text("# parser = MaltParser Language: English. Parser configuration: Stack. Transition system: Projective. Model: de.tudarmstadt.ukp.dkpro.core.maltparser-upstream-parser-en-linear. Model version: 20120312."), NullWritable.get());
+
         parserName = context.getConfiguration().getStrings("parserName", "malt")[0];
         log.info("Parser ('malt' or 'stanford'): " + parserName);
 
@@ -87,10 +95,10 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 }
             }
             if (collapsing){
+                String rulesPath = extractRulesFile();
                 collapser = AnalysisEngineFactory.createEngine(
                         CollapsedDependenciesAnnotator.class,
-                        CollapsedDependenciesAnnotator.RULE_MANAGER,
-                        getClass().getClassLoader().getResource("data/collapsing_rules_english_cc.txt").getPath());
+                        CollapsedDependenciesAnnotator.RULE_MANAGER, rulesPath);
             }
 
             nerEngine = AnalysisEngineFactory.createEngine(StanfordNamedEntityRecognizer.class,
@@ -105,6 +113,18 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
         }
     }
 
+    private String extractRulesFile() throws IOException {
+        InputStream inStream = getClass().getClassLoader().getResourceAsStream("data/collapsing_rules_english_cc.txt");
+        File rulesPath = new File("./rules.txt");
+        if (!Files.exists(rulesPath.toPath())) {
+            OutputStream outStream = new FileOutputStream(rulesPath);
+            IOUtils.copy(inStream, outStream);
+            inStream.close();
+            outStream.close();
+        }
+        return rulesPath.getAbsolutePath();
+    }
+
     public String cleanup(String document) {
         try {
             document = Jsoup.parse(document.replace("   ", " . ")).text();
@@ -116,7 +136,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 String s = sentence.getCoveredText();
                 Matcher urlMatch = urlRegex.matcher(s);
-                Matcher htmlMatch = urlRegex.matcher(s);
+                Matcher htmlMatch = htmlRegex.matcher(s);
                 Matcher latinMatch = latinTextRegex.matcher(s);
                 Matcher lettersMatch = someLettersRegex.matcher(s);
 
@@ -127,7 +147,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             }
             return d.toString();
         } catch(Exception e){
-            log.error("Can't process document.", e);
+            if(verbose) log.error("Can't process document.", e);
             return "";
         }
     }
@@ -184,6 +204,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             lemmatizer.process(jCas);
             nerEngine.process(jCas);
             parser.process(jCas);
+            if (collapsing) collapser.process(jCas);
 
             if (collapsing) collapser.process(jCas);
 
@@ -209,13 +230,21 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 List<NamedEntity> ngrams = JCasUtil.selectCovered(jCas, NamedEntity.class, sentence);
                 context.write(new Text("\n# sent_id = " + url + "#" + sentenceId), NullWritable.get());
                 context.write(new Text("# text = " + sentence.getCoveredText()), NullWritable.get());
-                Collection<Dependency> deps = JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd());
 
+                HashMap<Token, String> tokenToCDep = new HashMap<>();
+                if (collapsing) {
+                    for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
+                        if (dep instanceof NewCollapsedDependency) {
+                            tokenToCDep.put(dep.getDependent(), tokenToID.getOrDefault(dep.getGovernor(), -1) + ":" + dep.getDependencyType());
+                        }
+                    }
+                }
 
                 TreeMap<Integer, Line> conllLines = new TreeMap<>();
-                for (Dependency dep : deps) {
+                for (Dependency dep : JCasUtil.selectCovered(jCas, Dependency.class, sentence.getBegin(), sentence.getEnd())) {
+                    if (dep instanceof NewCollapsedDependency) continue;
                     Integer idSrc = tokenToID.getOrDefault(dep.getDependent(), -2);
-                    Line l  = new Line(
+                    Line l = new Line(
                             idSrc,
                             dep.getDependent().getCoveredText(),
                             dep.getDependent().getLemma() != null ? dep.getDependent().getLemma().getValue() : "",
@@ -224,22 +253,10 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                             dep.getDependent().getMorph() != null ? dep.getDependent().getMorph().getValue() : "",
                             tokenToID.getOrDefault(dep.getGovernor(), -2),
                             dep.getDependencyType(),
-                            "_",
+                            tokenToCDep.getOrDefault(dep.getDependent(),"_"),
                             getBIO(ngrams, dep.getBegin(), dep.getEnd())
                     );
                     conllLines.put(idSrc, l);
-                }
-
-                // Gather the collapsed dependencies
-                for (NewCollapsedDependency dep : JCasUtil.selectCovered(jCas, NewCollapsedDependency.class, sentence.getBegin(), sentence.getEnd())) {
-                    Integer idSrc = tokenToID.getOrDefault(dep.getDependent(), -2);
-                    Line l = conllLines.getOrDefault(idSrc, null);
-                    if (idSrc != -2 && line != null){
-                        l.enhancedDepType = dep.getDependencyType();
-                        conllLines.put(idSrc, l);
-                    } else {
-                        System.out.println("Warning: token not found in the collapsed deps.:" + dep);
-                    }
                 }
 
                 for (Integer id : conllLines.keySet()) {
@@ -251,7 +268,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 sentenceId += 1;
             }
         } catch(Exception e){
-            log.error("Can't process line: " + line.toString(), e);
+            if (verbose) log.error("Can't process line: " + line.toString(), e);
             context.getCounter("de.tudarmstadt.lt.wiki", "NUM_MAP_ERRORS").increment(1);
         }
     }
