@@ -117,10 +117,12 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     private String extractRulesFile() throws IOException {
         InputStream inStream = getClass().getClassLoader().getResourceAsStream("data/collapsing_rules_english_cc.txt");
         File rulesPath = new File("./rules.txt");
-        OutputStream outStream = new FileOutputStream(rulesPath);
-        IOUtils.copy(inStream, outStream);
-        inStream.close();
-        outStream.close();
+        if (!Files.exists(rulesPath.toPath())) {
+            OutputStream outStream = new FileOutputStream(rulesPath);
+            IOUtils.copy(inStream, outStream);
+            inStream.close();
+            outStream.close();
+        }
         return rulesPath.getAbsolutePath();
     }
 
