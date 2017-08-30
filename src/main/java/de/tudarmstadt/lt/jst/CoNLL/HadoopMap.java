@@ -52,7 +52,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
     boolean collapsing;
     String parserName;
     boolean verbose = false;
-    int maxSentenceSizeTokens = 110;
+    int maxSentenceSizeTokens = 50;
     String inputType;
     String SENTENCE = "sentence";
     String DOCUMENT = "document";
@@ -125,7 +125,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
         return rulesPath.getAbsolutePath();
     }
 
-    public String cleanup(String document) {
+    public String cleanup(String document, Context context) {
         try {
             document = Jsoup.parse(document.replace("   ", " . ")).text();
             jCas.reset();
@@ -133,7 +133,14 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             jCas.setDocumentLanguage("en");
             segmenter.process(jCas);
             StringBuilder d = new StringBuilder();
+
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+                Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
+                if (tokens.size() > maxSentenceSizeTokens) {
+                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
+                    continue;
+                }
+
                 String s = sentence.getCoveredText();
                 Matcher urlMatch = urlRegex.matcher(s);
                 Matcher htmlMatch = htmlRegex.matcher(s);
@@ -191,9 +198,8 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
                 if (fields.length == 3){
                     url = fields[0];
                     s3 = fields[1];
-                    text = cleanup(fields[2]);
+                    text = cleanup(fields[2], context);
                 }
-                // Output a header that contains the provenance
             }
 
             jCas.reset();
@@ -204,8 +210,6 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             lemmatizer.process(jCas);
             nerEngine.process(jCas);
             parser.process(jCas);
-            if (collapsing) collapser.process(jCas);
-
             if (collapsing) collapser.process(jCas);
 
             // For each dependency output a field with ten columns ending with the bio named entity: http://universaldependencies.org/docs/format.html
@@ -222,7 +226,7 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
                 if (tokens.size() > maxSentenceSizeTokens) {
-                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES").increment(1);
+                    context.getCounter("de.tudarmstadt.lt.wsi", "NUM_SKIPPED_SENTENCES_2").increment(1);
                     continue;
                 }
 
