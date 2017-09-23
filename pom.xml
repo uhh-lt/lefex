@@ -42,7 +42,8 @@
             <artifactId>org.jobimtext.collapsing</artifactId>
             <version>0.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/jbt-jars/org.jobimtext.collapsing.jar</systemPath>
+            <!--<systemPath>${project.basedir}/bt-jars/org.jobimtext.collapsing.jar</systemPath>-->
+            <systemPath>/Users/sasha/work/active/joint/lefex/src/main/resources/jbt-jars/org.jobimtext.collapsing.jar</systemPath>
         </dependency>
 
         <dependency>
