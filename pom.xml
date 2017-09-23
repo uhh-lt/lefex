@@ -32,7 +32,6 @@
     </repositories>
 
     <dependencies>
-
         <!-- JoBimText dependency to be installed locally by
            git clone https://github.com/tudarmstadt-lt/jbt-jars.git to src/main/resources/
            and running the install-jar-locally.sh script inside this repository
