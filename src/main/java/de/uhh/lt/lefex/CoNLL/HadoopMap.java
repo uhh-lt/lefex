@@ -222,8 +222,10 @@ public class HadoopMap extends Mapper<LongWritable, Text, Text, NullWritable> {
             int sentenceId = 1;
             for (Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
                 Collection<Token> tokens = JCasUtil.selectCovered(jCas, Token.class, sentence.getBegin(), sentence.getEnd());
+                context.getCounter("de.uhh.lt.lefex", "NUM_TOKENS_TOTAL").increment(tokens.size());
                 if (tokens.size() > maxSentenceSizeTokens) {
                     context.getCounter("de.uhh.lt.lefex", "NUM_SKIPPED_SENTENCES_2").increment(1);
+                    context.getCounter("de.uhh.lt.lefex", "NUM_TOKENS_SKIPPED").increment(tokens.size());
                     continue;
                 }
                 context.getCounter("de.uhh.lt.lefex", "NUM_TOKENS").increment(tokens.size());
