@@ -5,7 +5,6 @@ if [ -z "$1" ] || [ -z "$2" ] ; then
 fi
 
 bin_hadoop=`echo target/lib/*.jar target/lefex*.jar`  # binaries are in the default location (mvn package)
-hadoop=hadoop 
 hadoop_xmx_mb=8192
 hadoop_mb=8000
 queue=shortrunning
@@ -13,7 +12,7 @@ corpus=$1
 output=$2
 
 echo "Corpus: $corpus"
-if  $hadoop fs -test -e $corpus  ; then
+if  hadoop fs -test -e $corpus  ; then
     echo "Corpus exists: true"
 else
     echo "Corpus exists: false"
@@ -24,8 +23,8 @@ read -n 2
 
 jars=`$bin_hadoop | tr " " ","`
 path=`$bin_hadoop | tr " " ":"`
-HADOOP_CLASSPATH=$path $hadoop \
-    de.tudarmstadt.lt.jst.ExtractTermFeatureScores.HadoopMain \
+HADOOP_CLASSPATH=$path hadoop \
+    de.uhh.lt.lefex.ExtractTermFeatureScores.HadoopMain \
     -libjars $jars \
     -Dmapreduce.reduce.failures.maxpercent=10 \
     -Dmapreduce.map.failures.maxpercent=10 \
