@@ -10,3 +10,5 @@ This project contains Hadoop jobs for extraction of features of words and texts.
 co-occurrences, dependency features, and trigrams. See the ```de.uhh.lt.lefex.ExtractLexicalSampleFeatures.HadoopMain``` class. 
 4. **SentenceSplitter**. This job take a plain text corpus as an input and outputs a file with exactly one sentence per line. See the ```de.uhh.lt.lefex.SentenceSplitter.HadoopMain``` class. 
 
+To build the project you may need to install a [JoBimText jar file](https://github.com/tudarmstadt-lt/collapsed-deps-jar) which contains a custom (non mavenified) dependency collapsing UIMA annotator. To do it use the [following script](https://github.com/tudarmstadt-lt/collapsed-deps-jar/blob/master/install-jar-locally.sh). 
+
